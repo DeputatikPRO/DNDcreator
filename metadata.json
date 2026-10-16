@@ -1,0 +1,6 @@
+{
+  "name": "DNDcreator",
+  "description": "Пошаговый генератор персонажей D&D 5e с интерактивным броском кубиков, базой рас и классов, живым предпросмотром и экспортом анкеты.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

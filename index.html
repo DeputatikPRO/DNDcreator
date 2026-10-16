@@ -1,1477 +1,801 @@
 <!DOCTYPE html>
-<html lang="ru" class="dark">
+<html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DNDcreator — By: Deputatik</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cinzel:wght@600;700;800&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0b0d12;
-            color: #e5e7eb;
-        }
-        .font-fantasy {
-            font-family: 'Cinzel', serif;
-        }
-        /* Стилизация таблицы под заметки со скриншота */
-        .note-table {
-            width: 100%;
-            border-collapse: collapse;
-            background-color: #050507;
-            border: 1px solid #27272a;
-            border-radius: 0.5rem;
-            overflow: hidden;
-        }
-        .note-table td {
-            border: 1px solid #27272a;
-            padding: 10px 14px;
-            font-size: 0.95rem;
-            color: #d4d4d8;
-        }
-        .note-table td:first-child {
-            width: 48%;
-            color: #a1a1aa;
-            font-weight: 500;
-        }
-        .note-table td:last-child {
-            font-weight: 600;
-            color: #f4f4f5;
-        }
-        /* Анимация броска кубика */
-        @keyframes diceShake {
-            0% { transform: rotate(0deg) scale(1); }
-            25% { transform: rotate(-14deg) scale(1.08); }
-            50% { transform: rotate(14deg) scale(1.12); }
-            75% { transform: rotate(-8deg) scale(1.05); }
-            100% { transform: rotate(0deg) scale(1); }
-        }
-        .dice-rolling {
-            animation: diceShake 0.35s ease-in-out;
-        }
-        /* Кастомный скроллбар */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #11131a;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #374151;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #4b5563;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DNDcreator — Генератор персонажей D&D 5e</title>
+  <meta name="description" content="Пошаговый генератор персонажей D&D 5e с интерактивным броском кубиков, базой рас и классов, живым предпросмотром и экспортом анкеты." />
+  <meta property="og:title" content="DNDcreator — Генератор персонажей D&D 5e" />
+  <meta property="og:description" content="Пошаговый генератор персонажей D&D 5e с интерактивным броском кубиков, базой рас и классов, живым предпросмотром и экспортом анкеты." />
+  <meta property="og:type" content="website" />
+  <link rel="stylesheet" href="./style.css" />
 </head>
-<body class="min-h-screen flex flex-col selection:bg-amber-500 selection:text-black">
+<body>
+  <!-- Background Canvas for Ambient Fantasy Magic Particles -->
+  <canvas id="bg-canvas"></canvas>
+  <div class="ambient-glow"></div>
 
-    <!-- Верхняя шапка -->
-    <header class="sticky top-0 z-30 bg-[#0f1219]/95 backdrop-blur-md border-b border-amber-500/20 shadow-lg">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
-            <div class="flex items-center gap-3">
-                <!-- Иконка D20 -->
-                <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500 to-red-700 p-0.5 shadow-md shadow-amber-500/20 flex items-center justify-center">
-                    <div class="w-full h-full bg-[#0b0d12] rounded-[10px] flex items-center justify-center">
-                        <svg class="w-7 h-7 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                            <polygon points="12 2 21 7 21 17 12 22 3 17 3 7 12 2"></polygon>
-                            <polyline points="12 2 12 12 21 7"></polyline>
-                            <polyline points="3 7 12 12 12 22"></polyline>
-                            <line x1="3" y1="17" x2="21" y2="17"></line>
-                            <line x1="12" y1="2" x2="3" y2="17"></line>
-                            <line x1="12" y1="2" x2="21" y2="17"></line>
-                        </svg>
-                    </div>
-                </div>
-                <div>
-                    <div class="flex items-center gap-2.5">
-                        <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight text-white font-fantasy">
-                            DND<span class="text-amber-400">creator</span>
-                        </h1>
-                        <span class="px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider bg-amber-500/15 text-amber-300 border border-amber-500/30 rounded-full">
-                            By: Deputatik
-                        </span>
-                    </div>
-                    <p class="text-xs text-zinc-400">
-                        Интерактивный конструктор персонажа D&D 5e • База знаний <a href="https://dnd.su/" target="_blank" rel="noopener noreferrer" class="text-amber-400 hover:underline font-medium">dnd.su ↗</a>
-                    </p>
-                </div>
-            </div>
+  <!-- Admin Active Notification Ribbon -->
+  <div id="admin-ribbon" class="admin-ribbon">
+    ⚡ Режим Мастера (Admin Mode) Активирован — Сняты ограничения на броски и характеристики
+  </div>
 
-            <!-- Быстрые действия -->
-            <div class="flex flex-wrap items-center gap-2">
-                <button onclick="loadFaliantExample()" class="px-3 py-2 text-xs sm:text-sm font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 rounded-xl transition flex items-center gap-1.5" title="Загрузить точь-в-точь персонажа с вашего скриншота">
-                    <span>📸</span> Пример с фото (Фалиант)
-                </button>
-                <button onclick="randomizeEntireCharacter()" class="px-3 py-2 text-xs sm:text-sm font-medium bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 rounded-xl transition flex items-center gap-1.5">
-                    <span>🎲</span> Полный рандом
-                </button>
-                <button onclick="downloadTxtFile()" class="px-4 py-2 text-xs sm:text-sm font-bold bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black rounded-xl shadow-md shadow-amber-500/20 transition flex items-center gap-1.5">
-                    <span>📥</span> Скачать .TXT
-                </button>
-            </div>
+  <!-- Main Header -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand-wrapper">
+        <div class="brand-icon">⚔️</div>
+        <div class="brand-text">
+          <h1>DNDcreator</h1>
+          <div class="brand-meta">
+            <span class="author-tag">By: Deputatik</span>
+            <span class="version-pill" id="header-version">v1.0.0</span>
+          </div>
         </div>
-    </header>
+      </div>
 
-    <!-- Основной контент -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <!-- Character Creation Progress Indicator -->
+      <div class="header-progress-wrap">
+        <div class="progress-labels">
+          <span id="progress-step-text">Шаг 1 из 7: Имя персонажа</span>
+          <span id="progress-percent-text">14%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progress-fill-bar"></div>
+        </div>
+      </div>
 
-        <!-- ЛЕВАЯ КОЛОНКА: Пошаговый опросник и правила (7 колонок на ПК) -->
-        <div class="lg:col-span-7 space-y-6">
+      <!-- Header Admin Action Button -->
+      <div class="header-actions">
+        <button id="btn-open-admin" class="btn-admin" type="button" title="Войти в режим мастера (пароль)">
+          <span id="admin-btn-icon">🔒</span>
+          <span id="admin-btn-text">Админ</span>
+        </button>
+      </div>
+    </div>
+  </header>
 
-            <!-- Приветственный блок -->
-            <div class="bg-gradient-to-r from-amber-500/10 via-red-500/5 to-transparent border border-amber-500/20 rounded-2xl p-4 sm:p-5">
-                <div class="flex items-start justify-between gap-3">
-                    <div>
-                        <h2 class="text-base sm:text-lg font-bold text-amber-300 flex items-center gap-2">
-                            <span>🐉</span> Добро пожаловать в кузницу героев DNDcreator!
-                        </h2>
-                        <p class="text-xs sm:text-sm text-zinc-300 mt-1 leading-relaxed">
-                            Отвечай на вопросы ниже шаг за шагом. Справа в реальном времени формируется карточка точно как в твоих заметках. Все описания рас, классов, стилей боя и снаряжения составлены по правилам <strong>D&D 5e (<a href="https://dnd.su/" target="_blank" class="text-amber-400 underline">dnd.su</a>)</strong>.
-                        </p>
-                    </div>
-                </div>
-            </div>
+  <!-- Main Content Container -->
+  <main class="main-container">
+    <!-- Left Column: Step-by-Step Character Creation Wizard -->
+    <div class="wizard-column">
+      <!-- Steps Navigation Tabs -->
+      <nav class="steps-nav" id="steps-nav">
+        <button class="step-tab active" data-step="1" type="button">
+          <span class="step-num">1</span>
+          <span>Имя</span>
+        </button>
+        <button class="step-tab" data-step="2" type="button">
+          <span class="step-num">2</span>
+          <span>Раса</span>
+        </button>
+        <button class="step-tab" data-step="3" type="button">
+          <span class="step-num">3</span>
+          <span>Класс</span>
+        </button>
+        <button class="step-tab" data-step="4" type="button">
+          <span class="step-num">4</span>
+          <span>Кубики 1d20</span>
+        </button>
+        <button class="step-tab" data-step="5" type="button">
+          <span class="step-num">5</span>
+          <span>Предыстория</span>
+        </button>
+        <button class="step-tab" data-step="6" type="button">
+          <span class="step-num">6</span>
+          <span>Снаряжение & Бой</span>
+        </button>
+        <button class="step-tab" data-step="7" type="button">
+          <span class="step-num">7</span>
+          <span>Экспорт</span>
+        </button>
+      </nav>
 
-            <!-- ШАГ 1: Имя и Уровень -->
-            <section class="bg-[#12151e] border border-zinc-800 rounded-2xl p-5 shadow-md space-y-4">
-                <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
-                    <div class="flex items-center gap-2.5">
-                        <span class="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-400 font-bold text-sm flex items-center justify-center">1</span>
-                        <h3 class="text-base sm:text-lg font-bold text-white">Вопрос 1: Как зовут твоего героя и какого он уровня?</h3>
-                    </div>
-                    <span class="text-xs text-zinc-400">Основа легенды</span>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div class="sm:col-span-2">
-                        <label class="block text-xs font-medium text-zinc-400 mb-1.5">Имя персонажа</label>
-                        <div class="flex gap-2">
-                            <input type="text" id="charName" value="Фалиант" oninput="updateSheet()" placeholder="Например: Фалиант"
-                                class="w-full bg-[#090b10] border border-zinc-700 focus:border-amber-500 rounded-xl px-3.5 py-2.5 text-white font-medium outline-none transition">
-                            <button onclick="generateRandomName()" class="px-3.5 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-amber-400 border border-zinc-700 rounded-xl text-sm font-medium shrink-0 transition" title="Сгенерировать фэнтези-имя">
-                                🎲 Имя
-                            </button>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-medium text-zinc-400 mb-1.5">Уровень (1–20)</label>
-                        <input type="number" id="charLevel" value="10" min="1" max="20" oninput="onLevelChange()"
-                            class="w-full bg-[#090b10] border border-zinc-700 focus:border-amber-500 rounded-xl px-3.5 py-2.5 text-white font-bold outline-none transition">
-                    </div>
-                </div>
-                <p class="text-xs text-zinc-400 bg-[#090b10] p-3 rounded-xl border border-zinc-800/80">
-                    💡 <strong>Справка:</strong> Уровень влияет на количество твоих Хитов (здоровья). Например, на 10-м уровне персонаж получает хиты за 1-й уровень + 9 повышений уровня (формула вида <code class="text-amber-300">13 + 9 * 6 = 67</code>, как на примере).
-                </p>
-            </section>
-
-            <!-- ШАГ 2: Выбор Расы (dnd.su) -->
-            <section class="bg-[#12151e] border border-zinc-800 rounded-2xl p-5 shadow-md space-y-4">
-                <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
-                    <div class="flex items-center gap-2.5">
-                        <span class="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-400 font-bold text-sm flex items-center justify-center">2</span>
-                        <h3 class="text-base sm:text-lg font-bold text-white">Вопрос 2: К какой расе принадлежит персонаж?</h3>
-                    </div>
-                    <a href="https://dnd.su/race/" target="_blank" class="text-xs text-amber-400 hover:underline">Все расы на dnd.su ↗</a>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-medium text-zinc-400 mb-1.5">Выбери расу</label>
-                        <select id="charRace" onchange="onRaceChange()" class="w-full bg-[#090b10] border border-zinc-700 focus:border-amber-500 rounded-xl px-3.5 py-2.5 text-white font-medium outline-none transition">
-                            <!-- Заполняется из JS -->
-                        </select>
-                    </div>
-
-                    <!-- Подвыбор наследия дракона / сопротивления -->
-                    <div>
-                        <label class="block text-xs font-medium text-zinc-400 mb-1.5">Сопротивление урону (от расы или магии)</label>
-                        <select id="charResistance" onchange="onResistanceChange()" class="w-full bg-[#090b10] border border-zinc-700 focus:border-amber-500 rounded-xl px-3.5 py-2.5 text-white font-medium outline-none transition">
-                            <option value="Электричество">⚡ Электричество (Синий / Бронзовый дракон)</option>
-                            <option value="Огонь">🔥 Огонь (Красный / Золотой / Латунный / Тифлинг)</option>
-                            <option value="Холод">❄️ Холод (Белый / Серебряный дракон)</option>
-                            <option value="Кислота">🧪 Кислота (Чёрный / Медный дракон)</option>
-                            <option value="Яд">☠️ Яд (Зелёный дракон / Дварф)</option>
-                            <option value="Психический урон">🧠 Психический урон</option>
-                            <option value="Некротическая энергия">💀 Некротическая энергия</option>
-                            <option value="Нет">➖ Нет сопротивления</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Подробное описание выбранной расы -->
-                <div id="raceDescriptionBox" class="bg-[#090b10] border border-zinc-800 rounded-xl p-4 space-y-2">
-                    <!-- Динамическое описание из JS -->
-                </div>
-            </section>
-
-            <!-- ШАГ 3: Выбор Класса и Стиля боя (dnd.su) -->
-            <section class="bg-[#12151e] border border-zinc-800 rounded-2xl p-5 shadow-md space-y-4">
-                <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
-                    <div class="flex items-center gap-2.5">
-                        <span class="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-400 font-bold text-sm flex items-center justify-center">3</span>
-                        <h3 class="text-base sm:text-lg font-bold text-white">Вопрос 3: Какой класс и боевой стиль ты выбираешь?</h3>
-                    </div>
-                    <a href="https://dnd.su/class/" target="_blank" class="text-xs text-amber-400 hover:underline">Классы на dnd.su ↗</a>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-medium text-zinc-400 mb-1.5">Класс персонажа</label>
-                        <select id="charClass" onchange="onClassChange()" class="w-full bg-[#090b10] border border-zinc-700 focus:border-amber-500 rounded-xl px-3.5 py-2.5 text-white font-medium outline-none transition">
-                            <!-- Заполняется из JS -->
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-medium text-zinc-400 mb-1.5">Стиль боя (Боевое мастерство)</label>
-                        <select id="charFightingStyle" onchange="onFightingStyleChange()" class="w-full bg-[#090b10] border border-zinc-700 focus:border-amber-500 rounded-xl px-3.5 py-2.5 text-white font-medium outline-none transition">
-                            <!-- Заполняется из JS -->
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Подробное описание выбранного класса и стиля -->
-                <div id="classDescriptionBox" class="bg-[#090b10] border border-zinc-800 rounded-xl p-4 space-y-2">
-                    <!-- Динамическое описание из JS -->
-                </div>
-            </section>
-
-            <!-- ШАГ 4: Бросок характеристик (Рандом 1к20 или 4к6 как на фото) -->
-            <section class="bg-[#12151e] border border-zinc-800 rounded-2xl p-5 shadow-md space-y-4">
-                <div class="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-800 pb-3">
-                    <div class="flex items-center gap-2.5">
-                        <span class="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-400 font-bold text-sm flex items-center justify-center">4</span>
-                        <h3 class="text-base sm:text-lg font-bold text-white">Вопрос 4: Бросим кубики на характеристики?</h3>
-                    </div>
-                    <span class="text-xs text-amber-400 font-medium">Сила, Ловкость, Телосложение и др.</span>
-                </div>
-
-                <!-- Переключатель метода броска -->
-                <div class="bg-[#090b10] border border-zinc-800 rounded-xl p-3.5 space-y-3">
-                    <div class="flex flex-wrap items-center justify-between gap-2">
-                        <span class="text-xs font-semibold uppercase tracking-wider text-zinc-400">Выбери режим генерации кубиков:</span>
-                        <div class="flex flex-wrap gap-2">
-                            <button id="modeBtnD20" onclick="setDiceMode('1d20')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition border">
-                                🎲 1 кубик на 20 (1к20 рандом)
-                            </button>
-                            <button id="modeBtn4d6" onclick="setDiceMode('4d6')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition border">
-                                🎯 4к6 (сумма 3 лучших — как на скрине)
-                            </button>
-                        </div>
-                    </div>
-
-                    <p id="diceModeExplanation" class="text-xs text-zinc-400 leading-relaxed">
-                        <!-- Заполняется из JS -->
-                    </p>
-
-                    <div class="flex flex-wrap gap-2 pt-1">
-                        <button onclick="rollAllStats()" class="flex-1 sm:flex-none px-4 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-amber-500/10 transition flex items-center justify-center gap-2">
-                            <span>🎲</span> Кинуть кубики на ВСЕ характеристики сразу
-                        </button>
-                        <button onclick="applyRacialBonusesToStats()" class="px-3.5 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-amber-300 border border-zinc-700 font-medium text-xs sm:text-sm rounded-xl transition flex items-center gap-1.5" title="Прибавить бонусы выбранной расы к текущим значениям">
-                            <span>✨</span> + Бонусы расы
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Сетка из 6 характеристик -->
-                <div id="statsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <!-- Генерируется динамически в JS -->
-                </div>
-
-                <!-- Лог бросков (как на скриншоте: 5 6 6 1 = 17 и формула ХП) -->
-                <div class="bg-[#090b10] border border-zinc-800 rounded-xl p-4 space-y-3">
-                    <div class="flex items-center justify-between">
-                        <label class="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
-                            <span>📜</span> Запись бросков и расчёта Хитов (отображается под таблицей)
-                        </label>
-                        <button onclick="recalcHpFormula()" class="text-xs text-amber-400 hover:underline">
-                            Пересчитать ХП по уровню
-                        </button>
-                    </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                            <span class="block text-[11px] text-zinc-400 mb-1">История бросков кубиков (6 строк):</span>
-                            <textarea id="rollHistoryText" rows="6" oninput="updateSheet()"
-                                class="w-full bg-[#12151e] border border-zinc-700 focus:border-amber-500 rounded-xl p-2.5 text-xs font-mono text-zinc-200 outline-none"></textarea>
-                        </div>
-                        <div class="space-y-2.5">
-                            <div>
-                                <span class="block text-[11px] text-zinc-400 mb-1">Формула Хитов (Здоровья):</span>
-                                <input type="text" id="hpFormulaInput" value="13+9*6=67" oninput="updateSheet()"
-                                    class="w-full bg-[#12151e] border border-zinc-700 focus:border-amber-500 rounded-xl px-3 py-2 text-sm font-mono text-amber-300 font-bold outline-none">
-                            </div>
-                            <div class="text-[11px] text-zinc-400 bg-[#12151e] p-2.5 rounded-lg border border-zinc-800 leading-relaxed">
-                                <strong>Как считается ХП на скриншоте:</strong><br>
-                                У Воина Кость Хитов <strong>1к10</strong>, Телосложение 17 (модификатор <strong>+3</strong>).<br>
-                                • На 1 уровне: <code class="text-zinc-200">10 + 3 = 13</code> хитов.<br>
-                                • За следующие 9 уровней: <code class="text-zinc-200">9 × 6 = 54</code>.<br>
-                                • Итого: <code class="text-amber-300">13+9*6=67</code>.
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- ШАГ 5: Снаряжение, Доспехи, КД и Оружие -->
-            <section class="bg-[#12151e] border border-zinc-800 rounded-2xl p-5 shadow-md space-y-4">
-                <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
-                    <div class="flex items-center gap-2.5">
-                        <span class="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-400 font-bold text-sm flex items-center justify-center">5</span>
-                        <h3 class="text-base sm:text-lg font-bold text-white">Вопрос 5: Чем вооружён и защищён твой герой?</h3>
-                    </div>
-                    <a href="https://dnd.su/articles/mechanics/404-weapons_and_armor/" target="_blank" class="text-xs text-amber-400 hover:underline">Оружие и доспехи ↗</a>
-                </div>
-
-                <!-- Калькулятор КД и выбор доспехов -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-xs font-medium text-zinc-400 mb-1.5">Доспех</label>
-                        <select id="armorSelect" onchange="onEquipmentPresetChange()" class="w-full bg-[#090b10] border border-zinc-700 focus:border-amber-500 rounded-xl px-3 py-2.5 text-sm text-white outline-none">
-                            <option value="Кольчуга из монет" data-ac="14" data-type="medium">Кольчуга из монет (КД 14 + Ловк)</option>
-                            <option value="Кольчуга" data-ac="16" data-type="heavy">Кольчуга (КД 16, тяжёлый)</option>
-                            <option value="Латы" data-ac="18" data-type="heavy">Латы (КД 18, тяжёлый)</option>
-                            <option value="Чешуйчатый доспех" data-ac="14" data-type="medium">Чешуйчатый доспех (КД 14 + Ловк)</option>
-                            <option value="Проклёпанная кожа" data-ac="12" data-type="light">Проклёпанная кожа (КД 12 + Ловк)</option>
-                            <option value="Кожаный доспех" data-ac="11" data-type="light">Кожаный доспех (КД 11 + Ловк)</option>
-                            <option value="Без доспеха" data-ac="10" data-type="none">Без доспеха (КД 10 + Ловк)</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-medium text-zinc-400 mb-1.5">Щит в руке (+2 к КД)</label>
-                        <select id="shieldSelect" onchange="onEquipmentPresetChange()" class="w-full bg-[#090b10] border border-zinc-700 focus:border-amber-500 rounded-xl px-3 py-2.5 text-sm text-white outline-none">
-                            <option value="Щит" data-bonus="2">🛡️ Щит (+2 к КД)</option>
-                            <option value="Нет" data-bonus="0">➖ Без щита (+0 к КД)</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-medium text-zinc-400 mb-1.5">Итоговый КД (Класс Доспеха)</label>
-                        <div class="flex gap-2">
-                            <input type="number" id="charAC" value="17" oninput="updateSheet()"
-                                class="w-full bg-[#090b10] border border-amber-500/60 focus:border-amber-400 rounded-xl px-3.5 py-2 text-amber-400 font-extrabold text-base outline-none">
-                            <button onclick="recalculateAC()" class="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 rounded-xl border border-zinc-700 shrink-0" title="Авто-расчёт КД">
-                                Авто
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="acFormulaHint" class="text-xs text-zinc-400 bg-[#090b10] px-3.5 py-2.5 rounded-xl border border-zinc-800">
-                    <!-- Пояснение расчёта КД -->
-                </div>
-
-                <!-- Оружие и стихийный урон -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                    <div>
-                        <label class="block text-xs font-medium text-zinc-400 mb-1.5">Основное оружие (с костью урона)</label>
-                        <select id="weaponSelect" onchange="onWeaponPresetChange()" class="w-full bg-[#090b10] border border-zinc-700 focus:border-amber-500 rounded-xl px-3 py-2.5 text-sm text-white outline-none">
-                            <option value="Двойной топор 1к8">🪓 Двойной топор 1к8 (Боевой топор)</option>
-                            <option value="Длинный меч 1к8">⚔️ Длинный меч 1к8 (универсальное 1к10)</option>
-                            <option value="Секира 1к12">🪓 Секира 1к12 (двуручное, тяжёлое)</option>
-                            <option value="Двуручный меч 2к6">🗡️ Двуручный меч 2к6 (тяжёлое)</option>
-                            <option value="Боевой молот 1к8">🔨 Боевой молот 1к8</option>
-                            <option value="Рапира 1к8">🤺 Рапира 1к8 (фехтовальное)</option>
-                            <option value="Длинный лук 1к8">🏹 Длинный лук 1к8 (дальнобойное)</option>
-                            <option value="Парные клинки 1к6">🗡️ Парные короткие мечи 1к6</option>
-                            <option value="Посох мага 1к6">🪄 Боевой посох 1к6 + Фокусировка</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-medium text-zinc-400 mb-1.5">Доп. / Стихийная атака (например, дыхание дракона)</label>
-                        <input type="text" id="elementalDamageNote" value="6 урон электричество" oninput="updateSheet()"
-                            placeholder="Например: 6 урон электричество"
-                            class="w-full bg-[#090b10] border border-zinc-700 focus:border-amber-500 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none">
-                    </div>
-                </div>
-
-                <!-- Редактор списка снаряжения -->
-                <div class="bg-[#090b10] border border-zinc-800 rounded-xl p-4 space-y-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-bold uppercase tracking-wider text-zinc-400">Предметы в таблице «Снаряжение»:</span>
-                        <span class="text-[11px] text-zinc-500">Можно добавлять и удалять свои предметы</span>
-                    </div>
-
-                    <div id="equipmentTagsList" class="flex flex-wrap gap-2">
-                        <!-- Генерируется в JS -->
-                    </div>
-
-                    <div class="flex gap-2">
-                        <input type="text" id="newEquipInput" placeholder="Добавить свой предмет (например: Зелье лечения 2к4+2)..."
-                            onkeydown="if(event.key==='Enter') addCustomEquipment()"
-                            class="flex-1 bg-[#12151e] border border-zinc-700 focus:border-amber-500 rounded-xl px-3.5 py-2 text-xs sm:text-sm text-white outline-none">
-                        <button onclick="addCustomEquipment()" class="px-4 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 rounded-xl text-xs sm:text-sm font-bold transition">
-                            + Добавить
-                        </button>
-                    </div>
-                </div>
-            </section>
+      <!-- ============================================================
+           STEP 1: ИМЯ ПЕРСОНАЖА (ТОЛЬКО ИЗ name.txt)
+           ============================================================ -->
+      <section class="step-section active" id="step-1">
+        <div class="section-intro-box">
+          <h2>🏷️ Имя героя</h2>
+          <p>
+            Каждое великое приключение начинается с имени. Вы можете ввести собственное имя героя или испытать удачу, крутанув рулетку фэнтезийных имен из базы архива.
+          </p>
         </div>
 
-        <!-- ПРАВАЯ КОЛОНКА: Живое превью (точь-в-точь как на скриншоте) и экспорт (5 колонок на ПК) -->
-        <div class="lg:col-span-5">
-            <div class="sticky top-20 space-y-5">
-
-                <!-- Карточка-смартфон как в заметках со скриншота -->
-                <div class="bg-[#050507] border border-zinc-800 rounded-3xl p-5 sm:p-6 shadow-2xl relative overflow-hidden">
-                    <!-- Верхняя панель в стиле заметки -->
-                    <div class="flex items-center justify-between text-[11px] text-zinc-500 mb-3 pb-2 border-b border-zinc-900">
-                        <span id="noteTimestamp">Записная книжка DNDcreator • By: Deputatik</span>
-                        <span class="text-amber-400 font-semibold">D&D 5e (dnd.su)</span>
-                    </div>
-
-                    <div class="flex items-baseline justify-between mb-4">
-                        <h2 class="text-xl font-bold text-zinc-300 tracking-wide">Заголовок</h2>
-                        <span id="previewLevelBadge" class="text-xs px-2.5 py-0.5 rounded-md bg-zinc-900 text-zinc-400 border border-zinc-800">
-                            Уровень 10
-                        </span>
-                    </div>
-
-                    <!-- Таблица 1: Основные параметры персонажа (1-в-1 со скриншотом) -->
-                    <table class="note-table mb-5">
-                        <tbody>
-                            <tr>
-                                <td>Имя</td>
-                                <td id="prevName">Фалиант</td>
-                            </tr>
-                            <tr>
-                                <td>Раса</td>
-                                <td id="prevRace">Драконорождённый</td>
-                            </tr>
-                            <tr>
-                                <td>Класс</td>
-                                <td id="prevClass">Воин</td>
-                            </tr>
-                            <tr>
-                                <td>Сила</td>
-                                <td id="prevSTR">15</td>
-                            </tr>
-                            <tr>
-                                <td>Ловкость</td>
-                                <td id="prevDEX">12</td>
-                            </tr>
-                            <tr>
-                                <td>Телосложение</td>
-                                <td id="prevCON">17</td>
-                            </tr>
-                            <tr>
-                                <td>Интеллект</td>
-                                <td id="prevINT">12</td>
-                            </tr>
-                            <tr>
-                                <td>Мудрость</td>
-                                <td id="prevWIS">10</td>
-                            </tr>
-                            <tr>
-                                <td>Харизма</td>
-                                <td id="prevCHA">11</td>
-                            </tr>
-                            <tr>
-                                <td>Кд</td>
-                                <td id="prevAC">17</td>
-                            </tr>
-                            <tr>
-                                <td>Сопротивление</td>
-                                <td id="prevRes">Электричество</td>
-                            </tr>
-                            <tr>
-                                <td>Стиль боя</td>
-                                <td id="prevStyle">Защита</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <!-- Блок расчётов бросков и ХП под таблицей (как на скриншоте) -->
-                    <div class="mb-5 space-y-1 font-mono text-sm text-zinc-200 pl-0.5">
-                        <div id="prevRollLines" class="space-y-1 whitespace-pre-line leading-relaxed"></div>
-                        <div id="prevHpLine" class="pt-1 text-amber-300 font-semibold">13+9*6=67</div>
-                    </div>
-
-                    <!-- Таблица 2: Снаряжение (1-в-1 со скриншотом) -->
-                    <div class="w-4/5 sm:w-2/3 mb-4">
-                        <table class="note-table">
-                            <tbody id="prevEquipTableBody">
-                                <!-- Первая строка всегда заголовок Снаряжение, далее предметы -->
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- Строка стихийного урона внизу -->
-                    <div id="prevElementalLine" class="text-sm text-zinc-200 font-medium pt-1">
-                        6 урон электричество
-                    </div>
-
-                    <!-- Подпись автора приложения -->
-                    <div class="mt-6 pt-3 border-t border-zinc-900 flex items-center justify-between text-[11px] text-zinc-500">
-                        <span>Создано в <strong class="text-zinc-400">DNDcreator</strong></span>
-                        <span class="text-amber-500/80 font-semibold">By: Deputatik</span>
-                    </div>
-                </div>
-
-                <!-- Панель кнопок скачивания и копирования -->
-                <div class="bg-[#12151e] border border-zinc-800 rounded-2xl p-4 space-y-3 shadow-lg">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-bold uppercase tracking-wider text-zinc-400">Экспорт готового персонажа</span>
-                        <span id="copyStatusBadge" class="hidden text-xs text-emerald-400 font-medium">✓ Скопировано!</span>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                        <button onclick="downloadTxtFile()" class="w-full py-3 px-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-extrabold text-sm rounded-xl shadow-lg shadow-amber-500/20 transition flex items-center justify-center gap-2">
-                            <span>💾</span> Скачать результат в .TXT
-                        </button>
-                        <button onclick="copySheetToClipboard()" class="w-full py-3 px-4 bg-zinc-800 hover:bg-zinc-700 text-white font-semibold text-sm rounded-xl border border-zinc-700 transition flex items-center justify-center gap-2">
-                            <span>📋</span> Скопировать текст
-                        </button>
-                    </div>
-
-                    <!-- Предпросмотр текстового файла -->
-                    <details class="group pt-1">
-                        <summary class="text-xs text-zinc-400 hover:text-amber-400 cursor-pointer select-none flex items-center justify-between py-1">
-                            <span>Посмотреть, как выглядит содержимое .txt файла</span>
-                            <span class="group-open:rotate-180 transition-transform">▼</span>
-                        </summary>
-                        <pre id="txtFilePreview" class="mt-2 bg-[#090b10] border border-zinc-800 rounded-xl p-3 text-[11px] font-mono text-zinc-300 overflow-x-auto max-h-60 whitespace-pre-wrap"></pre>
-                    </details>
-                </div>
-
+        <div class="content-card">
+          <label for="char-name-input" style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:0.5rem; font-weight:600;">
+            Имя вашего персонажа
+          </label>
+          <div class="name-grid">
+            <div class="input-group">
+              <input type="text" id="char-name-input" class="fantasy-input" placeholder="Например: Фалиант, Арагорн..." autocomplete="off" />
             </div>
-        </div>
-    </main>
+            <button type="button" id="btn-random-name" class="btn-roulette">
+              <span id="roulette-dice-icon">🎲</span>
+              <span id="roulette-text">Случайное имя</span>
+            </button>
+          </div>
 
-    <!-- Футер -->
-    <footer class="border-t border-zinc-800/80 bg-[#090b10] py-5 mt-10">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-500">
+          <div style="margin-top: 1.25rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <span style="font-size:0.8rem; color:var(--text-muted);">Быстрый выбор из архива имён:</span>
+              <span style="font-size:0.75rem; color:var(--gold-primary);" id="names-loaded-count">Загрузка имен...</span>
+            </div>
+            <div class="name-quick-list" id="name-suggestions-box">
+              <!-- Dynamically populated from name.txt -->
+            </div>
+          </div>
+        </div>
+
+        <div class="step-nav-buttons">
+          <div></div>
+          <button type="button" class="btn-primary" data-next-step="2">
+            К выбору расы ➔
+          </button>
+        </div>
+      </section>
+
+      <!-- ============================================================
+           STEP 2: ВЫБОР РАСЫ (50+ РАС D&D 5e)
+           ============================================================ -->
+      <section class="step-section" id="step-2">
+        <div class="section-intro-box">
+          <h2>🧬 Раса и наследие</h2>
+          <p>
+            Раса определяет физические черты персонажа, его размер, базовую скорость перемещения, расовые бонусы к характеристикам, устойчивость к урону и уникальные врождённые способности.
+          </p>
+        </div>
+
+        <div class="content-card">
+          <div class="search-filter-bar">
+            <input type="text" id="race-search-input" class="search-input" placeholder="🔍 Найти расу (Драконорождённый, Эльф, Голиаф...)" />
+          </div>
+
+          <!-- Cards Grid for Races -->
+          <div class="cards-grid" id="races-cards-container">
+            <!-- Populated via data-races.js in app.js -->
+          </div>
+
+          <!-- Selected Race Details Panel -->
+          <div id="race-detail-panel" class="detailed-info-panel" style="display:none;">
+            <div class="detail-header">
+              <div>
+                <h3 id="race-detail-name">Название расы</h3>
+                <span id="race-detail-basics" style="font-size:0.8rem; color:var(--text-muted);">Размер: Средний | Скорость: 30 фт.</span>
+              </div>
+              <a id="race-dndsu-link" href="#" target="_blank" rel="noopener noreferrer" class="lore-badge-link">
+                📖 Читать лор на dnd.su ↗
+              </a>
+            </div>
+
+            <!-- Subrace / Draconic Ancestry / Variant selector if available -->
+            <div id="race-subrace-group" style="margin-top:0.75rem; display:none;">
+              <label for="race-subrace-select" style="font-size:0.8rem; color:var(--gold-light); display:block; margin-bottom:0.35rem; font-weight:600;">
+                Разновидность / Драконье наследие:
+              </label>
+              <select id="race-subrace-select" class="fantasy-input" style="padding:0.5rem 0.75rem; font-size:0.9rem;">
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+
+            <p id="race-detail-desc" style="font-size:0.85rem; color:var(--text-main); line-height:1.5; margin-top:0.6rem;"></p>
+
+            <div class="detail-traits-grid" id="race-traits-container">
+              <!-- Traits populated dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <div class="step-nav-buttons">
+          <button type="button" class="btn-secondary" data-prev-step="1">⬅ Назад</button>
+          <button type="button" class="btn-primary" data-next-step="3">К выбору класса ➔</button>
+        </div>
+      </section>
+
+      <!-- ============================================================
+           STEP 3: ВЫБОР КЛАССА И СТИЛЯ БОЯ
+           ============================================================ -->
+      <section class="step-section" id="step-3">
+        <div class="section-intro-box">
+          <h2>🛡️ Класс и боевая специализация</h2>
+          <p>
+            Класс — главное призвание персонажа: его кость здоровья (Хиты), владение броней и оружием, спасброски и ключевые боевые приёмы. Для воинских классов доступен выбор стиля боя (например, «Защита» дает +1 к КД).
+          </p>
+        </div>
+
+        <div class="content-card">
+          <div class="cards-grid" id="classes-cards-container">
+            <!-- Populated via data-classes.js -->
+          </div>
+
+          <!-- Selected Class Details Panel -->
+          <div id="class-detail-panel" class="detailed-info-panel" style="display:none;">
+            <div class="detail-header">
+              <div>
+                <h3 id="class-detail-name">Название класса</h3>
+                <span id="class-detail-basics" style="font-size:0.8rem; color:var(--text-muted);">Кость хитов: 1d10 | Основная хар-ка: Сила</span>
+              </div>
+              <a id="class-dndsu-link" href="#" target="_blank" rel="noopener noreferrer" class="lore-badge-link">
+                📖 Читать лор на dnd.su ↗
+              </a>
+            </div>
+
+            <p id="class-detail-desc" style="font-size:0.85rem; color:var(--text-main); line-height:1.5; margin-bottom:0.75rem;"></p>
+
+            <!-- Fighting Style Option (if class supports it like Fighter, Paladin, Ranger) -->
+            <div id="fighting-style-group" style="background:rgba(0,0,0,0.3); border-radius:var(--radius-sm); padding:0.75rem; border-left:2px solid var(--gold-primary); margin-bottom:0.75rem;">
+              <label for="fighting-style-select" style="font-size:0.82rem; color:var(--gold-light); display:block; margin-bottom:0.35rem; font-weight:700;">
+                ⚔️ Стиль боя (Бонус специализации):
+              </label>
+              <select id="fighting-style-select" class="fantasy-input" style="padding:0.5rem 0.75rem; font-size:0.9rem;">
+                <option value="none">Без стиля боя</option>
+                <option value="defense" selected>Защита (+1 к Классу Доспеха при ношении доспеха)</option>
+                <option value="dueling">Дуэлянт (+2 к урону при оружии в одной руке)</option>
+                <option value="archery">Стрельба (+2 к броскам атаки дальнобойным оружием)</option>
+                <option value="greatweapon">Двуручное оружие (переброс 1 и 2 на костях урона)</option>
+                <option value="protection">Охрана (помеха на атаку врага по союзнику со щитом)</option>
+                <option value="twoweapon">Сражение двумя оружиями (добавление мода к доп. атаке)</option>
+              </select>
+              <span style="font-size:0.75rem; color:var(--text-muted); display:block; margin-top:0.25rem;">
+                Стиль «Защита» автоматически суммируется с вашим КД при расчете брони.
+              </span>
+            </div>
+
+            <div class="detail-traits-grid" id="class-features-container">
+              <!-- Features populated dynamically -->
+            </div>
+          </div>
+        </div>
+
+        <div class="step-nav-buttons">
+          <button type="button" class="btn-secondary" data-prev-step="2">⬅ Назад</button>
+          <button type="button" class="btn-primary" data-next-step="4">К броску кубиков ➔</button>
+        </div>
+      </section>
+
+      <!-- ============================================================
+           STEP 4: ГЕНЕРАЦИЯ ХАРАКТЕРИСТИК (1d20 И РАСПРЕДЕЛЕНИЕ)
+           ============================================================ -->
+      <section class="step-section" id="step-4">
+        <div class="section-intro-box">
+          <h2>🎲 Генерация характеристик броском 1d20</h2>
+          <p>
+            В D&D 5e характеристики определяют мощь героя: <strong>Сила, Ловкость, Телосложение, Интеллект, Мудрость, Харизма</strong>. По правилам вашей кампании вы бросаете кубики <strong>ТОЛЬКО 1 РАЗ</strong> (6 бросков 1d20 от 1 до 20). Выпавшие числа отправляются в Пул значений, откуда вы свободно распределяете их по характеристикам персонажа. Модификатор считается по формуле: <code>(Значение + РасовыйБонус - 10) / 2</code>.
+          </p>
+        </div>
+
+        <!-- Dice Rolling Arena -->
+        <div class="dice-arena">
+          <div class="dice-controls">
+            <button type="button" id="btn-roll-stats" class="btn-roll-dice">
+              <span style="font-size:1.4rem;">🎲</span>
+              <span id="btn-roll-stats-text">Бросить кубики (1 раз)</span>
+            </button>
+            <div id="dice-roll-status" style="font-size:0.85rem; color:var(--gold-light);">
+              Нажмите кнопку, чтобы сгенерировать 6 значений для характеристик
+            </div>
+          </div>
+
+          <!-- 6 Visual 3D d20 Dice -->
+          <div class="dice-visual-container" id="dice-visual-container">
+            <div class="d20-box" id="dice-box-0"><div class="d20-poly"><span class="d20-number">?</span></div></div>
+            <div class="d20-box" id="dice-box-1"><div class="d20-poly"><span class="d20-number">?</span></div></div>
+            <div class="d20-box" id="dice-box-2"><div class="d20-poly"><span class="d20-number">?</span></div></div>
+            <div class="d20-box" id="dice-box-3"><div class="d20-poly"><span class="d20-number">?</span></div></div>
+            <div class="d20-box" id="dice-box-4"><div class="d20-poly"><span class="d20-number">?</span></div></div>
+            <div class="d20-box" id="dice-box-5"><div class="d20-poly"><span class="d20-number">?</span></div></div>
+          </div>
+
+          <!-- Values Pool -->
+          <div class="pool-section">
+            <div class="pool-header">
+              <h4>Пул выпавших значений (выберите или перетащите):</h4>
+              <span id="pool-remaining-count" style="font-size:0.8rem; color:var(--text-muted);">Доступно: 6 из 6</span>
+            </div>
+            <div class="pool-chips" id="pool-chips-container">
+              <span style="color:var(--text-dark); font-size:0.85rem; padding:0.5rem;">Бросьте кубики, чтобы заполнить пул чисел...</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ability Scores Assignment Slots -->
+        <div class="stats-assignment-grid" id="stats-assignment-grid">
+          <!-- Populated in app.js: STR, DEX, CON, INT, WIS, CHA with recommended star tag -->
+        </div>
+
+        <div class="step-nav-buttons">
+          <button type="button" class="btn-secondary" data-prev-step="3">⬅ Назад</button>
+          <button type="button" class="btn-primary" data-next-step="5">К предыстории ➔</button>
+        </div>
+      </section>
+
+      <!-- ============================================================
+           STEP 5: ПРЕДЫСТОРИЯ И МИРОВОЗЗРЕНИЕ
+           ============================================================ -->
+      <section class="step-section" id="step-5">
+        <div class="section-intro-box">
+          <h2>📜 Предыстория и Мировоззрение</h2>
+          <p>
+            Кем был ваш персонаж до того, как ступил на путь приключений? Предыстория даёт владение навыками, инструментами и стартовыми ресурсами, а мировоззрение очерчивает моральный компас героя.
+          </p>
+        </div>
+
+        <div class="content-card">
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:1.25rem;">
             <div>
-                <strong class="text-zinc-300">DNDcreator</strong> — Конструктор персонажей D&D 5e • <span class="text-amber-400 font-semibold">By: Deputatik</span>
+              <label for="char-background-select" style="font-size:0.85rem; color:var(--gold-light); display:block; margin-bottom:0.4rem; font-weight:700;">
+                Предыстория героя:
+              </label>
+              <select id="char-background-select" class="fantasy-input">
+                <option value="soldier">Солдат (Атлетика, Запугивание)</option>
+                <option value="folk_hero">Герой народа (Выживание, Уход за животными)</option>
+                <option value="noble">Дворянин (История, Убеждение)</option>
+                <option value="sage">Мудрец (Магия, История)</option>
+                <option value="criminal">Преступник (Обман, Скрытность)</option>
+                <option value="acolyte">Прислужник (Религия, Проницательность)</option>
+                <option value="outlander">Скиталец (Атлетика, Выживание)</option>
+                <option value="urchin">Беспризорник (Ловкость рук, Скрытность)</option>
+                <option value="guild_artisan">Гильдейский ремесленник (Проницательность, Убеждение)</option>
+                <option value="hermit">Отшельник (Медицина, Религия)</option>
+              </select>
             </div>
+
             <div>
-                Справочные материалы и механики основаны на <a href="https://dnd.su/" target="_blank" rel="noopener noreferrer" class="text-amber-400 hover:underline">dnd.su</a>
+              <label for="char-alignment-select" style="font-size:0.85rem; color:var(--gold-light); display:block; margin-bottom:0.4rem; font-weight:700;">
+                Мировоззрение:
+              </label>
+              <select id="char-alignment-select" class="fantasy-input">
+                <option value="LG">Законно-добрый (LG)</option>
+                <option value="NG">Нейтрально-добрый (NG)</option>
+                <option value="CG">Хаотично-добрый (CG)</option>
+                <option value="LN">Законно-нейтральный (LN)</option>
+                <option value="TN" selected>Истинно нейтральный (TN)</option>
+                <option value="CN">Хаотично-нейтральный (CN)</option>
+                <option value="LE">Законно-злой (LE)</option>
+                <option value="NE">Нейтрально-злой (NE)</option>
+                <option value="CE">Хаотично-злой (CE)</option>
+              </select>
             </div>
+          </div>
+
+          <div style="margin-top:1.5rem;">
+            <h4 style="font-family:var(--font-heading); color:var(--gold-light); font-size:1rem; margin-bottom:0.6rem;">
+              Владение навыками (+2 Бонус мастерства):
+            </h4>
+            <div id="skills-checkbox-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:0.5rem;">
+              <!-- Populated in app.js -->
+            </div>
+          </div>
         </div>
-    </footer>
 
-    <!-- Встроенный JavaScript со всей базой знаний dnd.su и логикой -->
-    <script>
-        // ==========================================
-        // 1. БАЗА ДАННЫХ РАС (по материалам dnd.su)
-        // ==========================================
-        const RACES_DB = {
-            "Драконорождённый": {
-                url: "https://dnd.su/race/78-dragonborn/",
-                bonuses: { STR: 2, CHA: 1 },
-                bonusText: "Сила +2, Харизма +1",
-                speed: "30 футов",
-                defaultResistance: "Электричество",
-                defaultBreath: "6 урон электричество",
-                description: "Рождённые драконами, как и гласит их название, драконорождённые гордо шествуют по миру, который встречает их с непонимающим страхом. Обладают Наследием драконов: получают Сопротивление к стихии своего предка и Оружие дыхания (2к6 урона на 1 уровне, с ростом уровня увеличивается)."
-            },
-            "Человек": {
-                url: "https://dnd.su/race/83-human/",
-                bonuses: { STR: 1, DEX: 1, CON: 1, INT: 1, WIS: 1, CHA: 1 },
-                bonusText: "+1 ко всем характеристикам",
-                speed: "30 футов",
-                defaultResistance: "Нет",
-                defaultBreath: "Атака оружием +1",
-                description: "Самая молодая, амбициозная и адаптивная из распространённых рас. Люди получают +1 ко всем шести характеристикам и быстро осваивают любое ремесло — от воинского дела до высшей магии."
-            },
-            "Эльф": {
-                url: "https://dnd.su/race/79-elf/",
-                bonuses: { DEX: 2, INT: 1 },
-                bonusText: "Ловкость +2, Интеллект/Мудрость +1",
-                speed: "30 футов",
-                defaultResistance: "Очарование (преимущество)",
-                defaultBreath: "Тёмное зрение 60 фт.",
-                description: "Эльфы — волшебный народ, обладающий неземным изяществом. У них Тёмное зрение (60 футов), обострённые чувства (владение Восприятием), защита от магического сна и трансовая медитация вместо обычного сна."
-            },
-            "Дварф": {
-                url: "https://dnd.su/race/77-dwarf/",
-                bonuses: { CON: 2, STR: 2 },
-                bonusText: "Телосложение +2, Сила/Мудрость +1",
-                speed: "25 футов (не снижается от тяжёлых доспехов)",
-                defaultResistance: "Яд",
-                defaultBreath: "Дварфийская устойчивость",
-                description: "Богатые древней историей королевства в толще гор, дварфы славятся стойкостью и мастерством кузнецов. Обладают Дварфийской устойчивостью (сопротивление урону ядом) и Тёмным зрением."
-            },
-            "Тифлинг": {
-                url: "https://dnd.su/race/82-tiefling/",
-                bonuses: { CHA: 2, INT: 1 },
-                bonusText: "Харизма +2, Интеллект +1",
-                speed: "30 футов",
-                defaultResistance: "Огонь",
-                defaultBreath: "Адское возмездие 2к10 огонь",
-                description: "Наследники древнего договора с архидьяволами Девяти Преисподних. Имеют врождённое Тёмное зрение, Адское сопротивление (сопротивление урону огнём) и дьявольские заклинания."
-            },
-            "Полуорк": {
-                url: "https://dnd.su/race/81-half-orc/",
-                bonuses: { STR: 2, CON: 1 },
-                bonusText: "Сила +2, Телосложение +1",
-                speed: "30 футов",
-                defaultResistance: "Непоколебимая стойкость (1 хит вместо 0)",
-                defaultBreath: "Свирепые атаки (+1 кость крита)",
-                description: "Яростные и могучие воины. Благодаря «Непоколебимой стойкости» при падении хитов до 0 могут остаться на ногах с 1 хитом, а «Свирепые атаки» добавляют дополнительную кость урона при критическом попадании."
-            },
-            "Полурослик": {
-                url: "https://dnd.su/race/80-halfling/",
-                bonuses: { DEX: 2, CHA: 1 },
-                bonusText: "Ловкость +2, Харизма/Телосложение +1",
-                speed: "25 футов",
-                defaultResistance: "Храбрость (от испуга)",
-                defaultBreath: "Везучий (переброс 1 на к20)",
-                description: "Невысокие, но невероятно удачливые искатели приключений. Умение «Везучий» позволяет перебрасывать выпавшую единицу на кубике к20 при атаках, проверках и спасбросках."
-            },
-            "Гном": {
-                url: "https://dnd.su/race/84-gnome/",
-                bonuses: { INT: 2, CON: 1 },
-                bonusText: "Интеллект +2, Телосложение/Ловкость +1",
-                speed: "25 футов",
-                defaultResistance: "Гномья хитрость (спасброски от магии)",
-                defaultBreath: "Тёмное зрение 60 фт.",
-                description: "Изобретатели, иллюзионисты и неутомимые исследователи. «Гномья хитрость» даёт преимущество на все спасброски Интеллекта, Мудрости и Харизмы против магии."
-            },
-            "Полуэльф": {
-                url: "https://dnd.su/race/85-half-elf/",
-                bonuses: { CHA: 2, DEX: 1, CON: 1 },
-                bonusText: "Харизма +2, и +1 к двум другим",
-                speed: "30 футов",
-                defaultResistance: "Очарование (преимущество)",
-                defaultBreath: "Универсальность (2 навыка)",
-                description: "Сочетают лучшие черты людей и эльфов. Обладают Тёмным зрением, защитой от очарования и владением двумя любыми навыками на выбор."
-            }
-        };
-
-        // ==========================================
-        // 2. БАЗА ДАННЫХ КЛАССОВ (по материалам dnd.su)
-        // ==========================================
-        const CLASSES_DB = {
-            "Воин": {
-                url: "https://dnd.su/class/91-fighter/",
-                hitDie: 10,
-                avgHitPerLevel: 6,
-                primaryStats: "Сила или Ловкость, Телосложение",
-                saves: "Сила, Телосложение",
-                defaultStyle: "Защита",
-                description: "Мастер всех видов оружия и доспехов. Воин получает Кость Хитов 1к10, «Второе дыхание» (лечение бонусным действием 1к10 + уровень), «Всплеск действий» (дополнительное действие в бою) и Боевой стиль с 1-го уровня."
-            },
-            "Варвар": {
-                url: "https://dnd.su/class/87-barbarian/",
-                hitDie: 12,
-                avgHitPerLevel: 7,
-                primaryStats: "Сила, Телосложение",
-                saves: "Сила, Телосложение",
-                defaultStyle: "Большое оружие",
-                description: "Свирепый воитель с самой большой Костью Хитов (1к12). Впадает в «Ярость», получая бонус к урону в ближнем бою и сопротивление дробящему, колющему и рубящему урону."
-            },
-            "Паладин": {
-                url: "https://dnd.su/class/94-paladin/",
-                hitDie: 10,
-                avgHitPerLevel: 6,
-                primaryStats: "Сила, Харизма",
-                saves: "Мудрость, Харизма",
-                defaultStyle: "Защита",
-                description: "Священный рыцарь, связанный клятвой. Кость Хитов 1к10. Обладает «Наложением рук» для исцеления ран и «Божественной карой», наносящей мощный урон излучением."
-            },
-            "Плут": {
-                url: "https://dnd.su/class/99-rogue/",
-                hitDie: 8,
-                avgHitPerLevel: 5,
-                primaryStats: "Ловкость, Интеллект/Харизма",
-                saves: "Ловкость, Интеллект",
-                defaultStyle: "Бой двумя оружиями",
-                description: "Мастер скрытности, ловушек и точных ударов. Кость Хитов 1к8. Наносит колоссальный урон «Скрытой атакой», когда имеет преимущество или рядом с целью стоит союзник."
-            },
-            "Следопыт": {
-                url: "https://dnd.su/class/97-ranger/",
-                hitDie: 10,
-                avgHitPerLevel: 6,
-                primaryStats: "Ловкость, Мудрость",
-                saves: "Сила, Ловкость",
-                defaultStyle: "Стрельба",
-                description: "Охотник и защитник диких земель. Кость Хитов 1к10. Выслеживает Избранных врагов, владеет природной магией и выбирает Боевой стиль."
-            },
-            "Волшебник": {
-                url: "https://dnd.su/class/105-wizard/",
-                hitDie: 6,
-                avgHitPerLevel: 4,
-                primaryStats: "Интеллект, Телосложение",
-                saves: "Интеллект, Мудрость",
-                defaultStyle: "Боевая магия",
-                description: "Учёный магии, записывающий заклинания в свой гримуар. Кость Хитов 1к6. Обладает самым широким арсеналом заклинаний и умением «Магическое восстановление»."
-            },
-            "Жрец": {
-                url: "https://dnd.su/class/89-cleric/",
-                hitDie: 8,
-                avgHitPerLevel: 5,
-                primaryStats: "Мудрость, Телосложение",
-                saves: "Мудрость, Харизма",
-                defaultStyle: "Защита",
-                description: "Проводник божественной воли. Кость Хитов 1к8. Носит средние или тяжёлые доспехи, щит, исцеляет союзников и направляет «Божественный канал»."
-            },
-            "Бард": {
-                url: "https://dnd.su/class/88-bard/",
-                hitDie: 8,
-                avgHitPerLevel: 5,
-                primaryStats: "Харизма, Ловкость",
-                saves: "Ловкость, Харизма",
-                defaultStyle: "Дуэлянт",
-                description: "Поэт и чародей, чья музыка творит магию. Кость Хитов 1к8. Раздаёт союзникам кубики «Вдохновения барда» и является мастером на все руки."
-            },
-            "Колдун": {
-                url: "https://dnd.su/class/104-warlock/",
-                hitDie: 8,
-                avgHitPerLevel: 5,
-                primaryStats: "Харизма, Телосложение",
-                saves: "Мудрость, Харизма",
-                defaultStyle: "Боевая магия",
-                description: "Заключил пакт с могущественным потусторонним Покровителем. Кость Хитов 1к8. Использует «Мистический заряд» (1к10 силового поля) и восстанавливает ячейки магии за короткий отдых."
-            },
-            "Монах": {
-                url: "https://dnd.su/class/93-monk/",
-                hitDie: 8,
-                avgHitPerLevel: 5,
-                primaryStats: "Ловкость, Мудрость",
-                saves: "Сила, Ловкость",
-                defaultStyle: "Боевые искусства",
-                description: "Мастер рукопашного боя и энергии Ци. Кость Хитов 1к8. Получает Защиту без доспехов (КД = 10 + мод. Ловкости + мод. Мудрости) и совершает серию стремительных ударов."
-            },
-            "Друид": {
-                url: "https://dnd.su/class/90-druid/",
-                hitDie: 8,
-                avgHitPerLevel: 5,
-                primaryStats: "Мудрость, Телосложение",
-                saves: "Интеллект, Мудрость",
-                defaultStyle: "Боевая магия",
-                description: "Хранитель природы, способный принимать «Дикий облик» любых зверей и управлять стихиями. Кость Хитов 1к8."
-            },
-            "Чародей": {
-                url: "https://dnd.su/class/101-sorcerer/",
-                hitDie: 6,
-                avgHitPerLevel: 4,
-                primaryStats: "Харизма, Телосложение",
-                saves: "Телосложение, Харизма",
-                defaultStyle: "Боевая магия",
-                description: "Носитель врождённой магии в крови (часто драконьей или дикой). Кость Хитов 1к6. Изменяет заклинания с помощью «Метамагии» и единиц чародейства."
-            }
-        };
-
-        // ==========================================
-        // 3. СТИЛИ БОЯ (dnd.su)
-        // ==========================================
-        const FIGHTING_STYLES_DB = {
-            "Защита": "Пока вы носите доспехи, вы получаете бонус +1 к КД (Классу Доспеха).",
-            "Дуэлянт": "Когда вы держите рукопашное оружие в одной руке и не используете другого оружия, вы получаете бонус +2 к броскам урона этим оружием.",
-            "Стрельба": "Вы получаете бонус +2 к броскам атаки, совершаемым дальнобойным оружием.",
-            "Большое оружие": "Если у вас выпало «1» или «2» на кости урона двуручным оружием, вы можете перебросить эту кость.",
-            "Бой двумя оружиями": "При бое двумя оружиями вы можете добавить модификатор характеристики к урону второй атаки.",
-            "Защитник": "Если вы используете щит, вы можете реакцией создать помеху атаке врага по союзнику в пределах 5 футов от вас.",
-            "Боевая магия": "Фокусировка на заговорах и боевых заклинаниях.",
-            "Боевые искусства": "Рукопашные удары и оружие монаха используют Ловкость вместо Силы."
-        };
-
-        // ==========================================
-        // 4. ХАРАКТЕРИСТИКИ И ТЕКУЩЕЕ СОСТОЯНИЕ
-        // ==========================================
-        const STATS_LIST = [
-            { id: "STR", name: "Сила", desc: "Мощь мышц, рукопашные атаки, грузоподъёмность и Атлетика." },
-            { id: "DEX", name: "Ловкость", desc: "Реакция, инициатива, КД в лёгких/средних доспехах, Скрытность." },
-            { id: "CON", name: "Телосложение", desc: "Выносливость и запас Хитов (здоровья) на каждом уровне." },
-            { id: "INT", name: "Интеллект", desc: "Память, логика, Магия, История, Расследование." },
-            { id: "WIS", name: "Мудрость", desc: "Внимательность (Восприятие), Медицина, Проницательность." },
-            { id: "CHA", name: "Харизма", desc: "Сила личности, Убеждение, Обман, Запугивание." }
-        ];
-
-        // Начальное состояние (Точно как на скриншоте пользователя: Фалиант)
-        let state = {
-            diceMode: "1d20", // '1d20' или '4d6'
-            stats: {
-                STR: 15,
-                DEX: 12,
-                CON: 17,
-                INT: 12,
-                WIS: 10,
-                CHA: 11
-            },
-            statRollBreakdown: {
-                STR: "5 6 6 1 = 17",
-                DEX: "1 5 1 4 = 10",
-                CON: "5 3 2 2 = 10",
-                INT: "4 2 6 2 = 12",
-                WIS: "6 2 1 5 = 13",
-                CHA: "5 2 4 3 = 12"
-            },
-            equipment: [
-                "Щит",
-                "Кольчуга из монет",
-                "Двойной топор 1к8"
-            ]
-        };
-
-        const FANTASY_NAMES = [
-            "Фалиант", "Архидон", "Бальтазар", "Донаар", "Геш", "Краив", "Медраш",
-            "Надарр", "Панджед", "Рогор", "Шамаш", "Тархун", "Торинн", "Валькир",
-            "Аларик", "Моргрейн", "Эльдар", "Каэль", "Сильвана", "Акаша", "Бири"
-        ];
-
-        // ==========================================
-        // 5. ИНИЦИАЛИЗАЦИЯ СТРАНИЦЫ
-        // ==========================================
-        window.onload = function () {
-            populateSelectors();
-            renderStatsInputs();
-            setDiceMode("1d20");
-            loadFaliantExample();
-        };
-
-        function populateSelectors() {
-            const raceSelect = document.getElementById("charRace");
-            raceSelect.innerHTML = "";
-            Object.keys(RACES_DB).forEach(race => {
-                const opt = document.createElement("option");
-                opt.value = race;
-                opt.textContent = race;
-                raceSelect.appendChild(opt);
-            });
-
-            const classSelect = document.getElementById("charClass");
-            classSelect.innerHTML = "";
-            Object.keys(CLASSES_DB).forEach(cls => {
-                const opt = document.createElement("option");
-                opt.value = cls;
-                opt.textContent = `${cls} (Кость хитов 1к${CLASSES_DB[cls].hitDie})`;
-                classSelect.appendChild(opt);
-            });
-
-            const styleSelect = document.getElementById("charFightingStyle");
-            styleSelect.innerHTML = "";
-            Object.keys(FIGHTING_STYLES_DB).forEach(style => {
-                const opt = document.createElement("option");
-                opt.value = style;
-                opt.textContent = style;
-                styleSelect.appendChild(opt);
-            });
-        }
-
-        function getModifier(score) {
-            return Math.floor((score - 10) / 2);
-        }
-
-        function formatMod(mod) {
-            return mod >= 0 ? `+${mod}` : `${mod}`;
-        }
-
-        // Отрисовка карточек 6 характеристик с кнопками индивидуального броска кубика
-        function renderStatsInputs() {
-            const container = document.getElementById("statsGrid");
-            container.innerHTML = "";
-
-            STATS_LIST.forEach(stat => {
-                const val = state.stats[stat.id];
-                const mod = getModifier(val);
-
-                const card = document.createElement("div");
-                card.id = `statCard_${stat.id}`;
-                card.className = "bg-[#090b10] border border-zinc-800 rounded-xl p-3.5 flex flex-col justify-between gap-2 transition hover:border-zinc-700";
-
-                card.innerHTML = `
-                    <div class="flex items-start justify-between gap-2">
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <span class="font-bold text-white text-sm">${stat.name}</span>
-                                <span id="modBadge_${stat.id}" class="text-xs px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-300 border border-amber-500/30 font-mono font-bold">
-                                    Мод: ${formatMod(mod)}
-                                </span>
-                            </div>
-                            <p class="text-[11px] text-zinc-400 mt-0.5 leading-snug">${stat.desc}</p>
-                        </div>
-                    </div>
-
-                    <div class="flex items-center justify-between gap-2 pt-1">
-                        <div class="flex items-center gap-1.5">
-                            <input type="number" id="input_${stat.id}" value="${val}" min="1" max="30"
-                                oninput="onManualStatInput('${stat.id}', this.value)"
-                                class="w-20 bg-[#12151e] border border-zinc-700 focus:border-amber-500 rounded-lg px-2.5 py-1.5 text-center text-white font-extrabold text-base outline-none">
-                            <span id="rollBadge_${stat.id}" class="text-[11px] font-mono text-zinc-400 bg-[#12151e] px-2 py-1 rounded border border-zinc-800">
-                                ${state.statRollBreakdown[stat.id] || ""}
-                            </span>
-                        </div>
-                        <button onclick="rollSingleStat('${stat.id}')"
-                            class="px-3 py-1.5 bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 rounded-lg text-xs font-bold transition flex items-center gap-1 shrink-0">
-                            <span>🎲</span> Кинуть
-                        </button>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        // ==========================================
-        // 6. РЕЖИМЫ КУБИКОВ: 1к20 И 4к6
-        // ==========================================
-        function setDiceMode(mode) {
-            state.diceMode = mode;
-            const btnD20 = document.getElementById("modeBtnD20");
-            const btn4d6 = document.getElementById("modeBtn4d6");
-            const exp = document.getElementById("diceModeExplanation");
-
-            if (mode === "1d20") {
-                btnD20.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition border bg-amber-500 text-black border-amber-400 shadow";
-                btn4d6.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition border bg-[#12151e] text-zinc-300 border-zinc-700 hover:bg-zinc-800";
-                exp.innerHTML = "🎲 <strong>Режим 1к20 (Рандом кубик на 20):</strong> Для каждой характеристики кидается 1 двадцатигранный кубик (от 1 до 20) и сразу записывается результат (например: <code class='text-amber-300'>1к20 = 15</code>). Весёлый и непредсказуемый режим!";
-            } else {
-                btn4d6.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition border bg-amber-500 text-black border-amber-400 shadow";
-                btnD20.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition border bg-[#12151e] text-zinc-300 border-zinc-700 hover:bg-zinc-800";
-                exp.innerHTML = "🎯 <strong>Режим 4к6 (как на скриншоте и в dnd.su):</strong> Кидаются 4 шестигранных кубика (к6), самый маленький отбрасывается, а 3 лучших складываются. В лог пишется точная расшифровка вида <code class='text-amber-300'>5 6 6 1 = 17</code>.";
-            }
-        }
-
-        function rollSingleStat(statId) {
-            const card = document.getElementById(`statCard_${statId}`);
-            if (card) {
-                card.classList.remove("dice-rolling");
-                void card.offsetWidth;
-                card.classList.add("dice-rolling");
-            }
-
-            if (state.diceMode === "1d20") {
-                const d20 = Math.floor(Math.random() * 20) + 1;
-                state.stats[statId] = d20;
-                state.statRollBreakdown[statId] = `1к20 = ${d20}`;
-            } else {
-                const rolls = [
-                    Math.floor(Math.random() * 6) + 1,
-                    Math.floor(Math.random() * 6) + 1,
-                    Math.floor(Math.random() * 6) + 1,
-                    Math.floor(Math.random() * 6) + 1
-                ];
-                const sorted = [...rolls].sort((a, b) => b - a);
-                const sum3 = sorted[0] + sorted[1] + sorted[2];
-                state.stats[statId] = sum3;
-                state.statRollBreakdown[statId] = `${rolls.join(" ")} = ${sum3}`;
-            }
-
-            syncStatUI(statId);
-            syncRollHistoryTextarea();
-            recalcHpFormula();
-            recalculateAC();
-            updateSheet();
-        }
-
-        function rollAllStats() {
-            STATS_LIST.forEach(s => {
-                rollSingleStat(s.id);
-            });
-        }
-
-        function applyRacialBonusesToStats() {
-            const raceName = document.getElementById("charRace").value;
-            const race = RACES_DB[raceName];
-            if (!race) return;
-
-            Object.keys(race.bonuses).forEach(statId => {
-                const bonus = race.bonuses[statId];
-                state.stats[statId] = Math.min(30, state.stats[statId] + bonus);
-                syncStatUI(statId);
-            });
-
-            recalcHpFormula();
-            recalculateAC();
-            updateSheet();
-        }
-
-        function onManualStatInput(statId, rawVal) {
-            const val = parseInt(rawVal, 10) || 10;
-            state.stats[statId] = val;
-            const mod = getModifier(val);
-            const modBadge = document.getElementById(`modBadge_${statId}`);
-            if (modBadge) modBadge.textContent = `Мод: ${formatMod(mod)}`;
-            updateSheet();
-        }
-
-        function syncStatUI(statId) {
-            const val = state.stats[statId];
-            const mod = getModifier(val);
-            const input = document.getElementById(`input_${statId}`);
-            const modBadge = document.getElementById(`modBadge_${statId}`);
-            const rollBadge = document.getElementById(`rollBadge_${statId}`);
-
-            if (input) input.value = val;
-            if (modBadge) modBadge.textContent = `Мод: ${formatMod(mod)}`;
-            if (rollBadge) rollBadge.textContent = state.statRollBreakdown[statId] || "";
-        }
-
-        function syncRollHistoryTextarea() {
-            const lines = STATS_LIST.map(s => state.statRollBreakdown[s.id] || `${state.stats[s.id]}`);
-            document.getElementById("rollHistoryText").value = lines.join("\n");
-        }
-
-        // ==========================================
-        // 7. ОБРАБОТЧИКИ РАСЫ, КЛАССА, ХП И КД
-        // ==========================================
-        function onRaceChange() {
-            const raceName = document.getElementById("charRace").value;
-            const race = RACES_DB[raceName];
-            if (!race) return;
-
-            // Автоматически обновляем сопротивление и стихийную заметку по расе
-            const resSelect = document.getElementById("charResistance");
-            const matchingOption = Array.from(resSelect.options).find(o => o.value === race.defaultResistance);
-            if (matchingOption) {
-                resSelect.value = race.defaultResistance;
-            }
-            document.getElementById("elementalDamageNote").value = race.defaultBreath;
-
-            renderRaceDescription();
-            updateSheet();
-        }
-
-        function onResistanceChange() {
-            const res = document.getElementById("charResistance").value;
-            const raceName = document.getElementById("charRace").value;
-            if (raceName === "Драконорождённый" && res !== "Нет") {
-                document.getElementById("elementalDamageNote").value = `6 урон ${res.toLowerCase()}`;
-            }
-            updateSheet();
-        }
-
-        function renderRaceDescription() {
-            const raceName = document.getElementById("charRace").value;
-            const race = RACES_DB[raceName];
-            if (!race) return;
-
-            const box = document.getElementById("raceDescriptionBox");
-            box.innerHTML = `
-                <div class="flex flex-wrap items-center justify-between gap-2">
-                    <span class="text-sm font-bold text-amber-400">🧬 ${raceName}</span>
-                    <div class="flex flex-wrap gap-1.5">
-                        <span class="text-[11px] px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 font-medium">
-                            Бонусы: ${race.bonusText}
-                        </span>
-                        <span class="text-[11px] px-2 py-0.5 rounded bg-zinc-800 text-zinc-300">
-                            Скорость: ${race.speed}
-                        </span>
-                    </div>
-                </div>
-                <p class="text-xs text-zinc-300 leading-relaxed">${race.description}</p>
-                <div class="pt-1">
-                    <a href="${race.url}" target="_blank" rel="noopener noreferrer" class="text-[11px] text-amber-400 hover:underline">
-                        Читать полное описание расы «${raceName}» на dnd.su ↗
-                    </a>
-                </div>
-            `;
-        }
-
-        function onClassChange() {
-            const className = document.getElementById("charClass").value;
-            const cls = CLASSES_DB[className];
-            if (!cls) return;
-
-            document.getElementById("charFightingStyle").value = cls.defaultStyle;
-            renderClassDescription();
-            recalcHpFormula();
-            recalculateAC();
-            updateSheet();
-        }
-
-        function onFightingStyleChange() {
-            renderClassDescription();
-            recalculateAC();
-            updateSheet();
-        }
-
-        function renderClassDescription() {
-            const className = document.getElementById("charClass").value;
-            const styleName = document.getElementById("charFightingStyle").value;
-            const cls = CLASSES_DB[className];
-            const styleDesc = FIGHTING_STYLES_DB[styleName] || "";
-
-            const box = document.getElementById("classDescriptionBox");
-            box.innerHTML = `
-                <div class="flex flex-wrap items-center justify-between gap-2">
-                    <span class="text-sm font-bold text-amber-400">⚔️ ${className}</span>
-                    <div class="flex flex-wrap gap-1.5">
-                        <span class="text-[11px] px-2 py-0.5 rounded bg-red-500/15 text-red-300 border border-red-500/30 font-medium">
-                            Кость Хитов: 1к${cls.hitDie}
-                        </span>
-                        <span class="text-[11px] px-2 py-0.5 rounded bg-zinc-800 text-zinc-300">
-                            Спасброски: ${cls.saves}
-                        </span>
-                    </div>
-                </div>
-                <p class="text-xs text-zinc-300 leading-relaxed">${cls.description}</p>
-                <div class="bg-[#12151e] border border-zinc-800 rounded-lg p-2.5 mt-2">
-                    <div class="text-xs font-bold text-amber-300">🛡️ Стиль боя «${styleName}»:</div>
-                    <div class="text-xs text-zinc-400 mt-0.5">${styleDesc}</div>
-                </div>
-                <div class="pt-1">
-                    <a href="${cls.url}" target="_blank" rel="noopener noreferrer" class="text-[11px] text-amber-400 hover:underline">
-                        Читать таблицу развития класса «${className}» на dnd.su ↗
-                    </a>
-                </div>
-            `;
-        }
-
-        function onLevelChange() {
-            recalcHpFormula();
-            updateSheet();
-        }
-
-        // Автоматический расчёт формулы Хитов (в стиле скриншота: 13+9*6=67)
-        function recalcHpFormula() {
-            const className = document.getElementById("charClass").value;
-            const cls = CLASSES_DB[className];
-            if (!cls) return;
-
-            const level = Math.max(1, Math.min(20, parseInt(document.getElementById("charLevel").value, 10) || 1));
-            const conMod = getModifier(state.stats.CON);
-
-            const firstLevelHp = Math.max(1, cls.hitDie + conMod);
-            const perLevelHp = Math.max(1, cls.avgHitPerLevel);
-
-            if (level === 1) {
-                document.getElementById("hpFormulaInput").value = `${cls.hitDie}+${conMod}=${firstLevelHp}`;
-            } else {
-                const extraLevels = level - 1;
-                const totalHp = firstLevelHp + extraLevels * perLevelHp;
-                document.getElementById("hpFormulaInput").value = `${firstLevelHp}+${extraLevels}*${perLevelHp}=${totalHp}`;
-            }
-        }
-
-        // Расчёт КД (Класса Доспеха)
-        function recalculateAC() {
-            const armorSel = document.getElementById("armorSelect");
-            const shieldSel = document.getElementById("shieldSelect");
-            const style = document.getElementById("charFightingStyle").value;
-
-            const armorOpt = armorSel.options[armorSel.selectedIndex];
-            const baseAc = parseInt(armorOpt.getAttribute("data-ac"), 10) || 10;
-            const armorType = armorOpt.getAttribute("data-type");
-
-            const dexMod = getModifier(state.stats.DEX);
-            let dexContribution = 0;
-            if (armorType === "light" || armorType === "none") {
-                dexContribution = dexMod;
-            } else if (armorType === "medium") {
-                dexContribution = Math.min(2, dexMod);
-            }
-
-            const shieldBonus = parseInt(shieldSel.options[shieldSel.selectedIndex].getAttribute("data-bonus"), 10) || 0;
-            const defenseStyleBonus = (style === "Защита" && armorType !== "none") ? 1 : 0;
-
-            const totalAc = baseAc + dexContribution + shieldBonus + defenseStyleBonus;
-            document.getElementById("charAC").value = totalAc;
-
-            const hint = document.getElementById("acFormulaHint");
-            hint.innerHTML = `🛡️ <strong>Расчёт КД:</strong> Доспех (${baseAc}) + Мод. Ловкости (${dexContribution >= 0 ? "+" + dexContribution : dexContribution}) + Щит (+${shieldBonus}) + Стиль «Защита» (+${defenseStyleBonus}) = <strong class="text-amber-400">${totalAc} КД</strong>`;
-        }
-
-        // ==========================================
-        // 8. УПРАВЛЕНИЕ СНАРЯЖЕНИЕМ
-        // ==========================================
-        function onEquipmentPresetChange() {
-            syncPresetsToEquipmentArray();
-            recalculateAC();
-            updateSheet();
-        }
-
-        function onWeaponPresetChange() {
-            syncPresetsToEquipmentArray();
-            updateSheet();
-        }
-
-        function syncPresetsToEquipmentArray() {
-            const shieldVal = document.getElementById("shieldSelect").value;
-            const armorVal = document.getElementById("armorSelect").value;
-            const weaponVal = document.getElementById("weaponSelect").value;
-
-            const newItems = [];
-            if (shieldVal !== "Нет") newItems.push(shieldVal);
-            if (armorVal !== "Без доспеха") newItems.push(armorVal);
-            if (weaponVal) newItems.push(weaponVal);
-
-            // Сохраняем пользовательские дополнительные предметы
-            const presetNames = [
-                "Щит", "Кольчуга из монет", "Кольчуга", "Латы", "Чешуйчатый доспех",
-                "Проклёпанная кожа", "Кожаный доспех", "Двойной топор 1к8",
-                "Длинный меч 1к8", "Секира 1к12", "Двуручный меч 2к6",
-                "Боевой молот 1к8", "Рапира 1к8", "Длинный лук 1к8",
-                "Парные клинки 1к6", "Посох мага 1к6"
-            ];
-
-            const customExtras = state.equipment.filter(item => !presetNames.includes(item));
-            state.equipment = [...newItems, ...customExtras];
-            renderEquipmentTags();
-        }
-
-        function addCustomEquipment() {
-            const input = document.getElementById("newEquipInput");
-            const val = input.value.trim();
-            if (!val) return;
-            state.equipment.push(val);
-            input.value = "";
-            renderEquipmentTags();
-            updateSheet();
-        }
-
-        function removeEquipmentItem(index) {
-            state.equipment.splice(index, 1);
-            renderEquipmentTags();
-            updateSheet();
-        }
-
-        function renderEquipmentTags() {
-            const container = document.getElementById("equipmentTagsList");
-            container.innerHTML = "";
-            state.equipment.forEach((item, idx) => {
-                const tag = document.createElement("span");
-                tag.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium bg-[#12151e] text-zinc-200 border border-zinc-700";
-                tag.innerHTML = `
-                    <span>${item}</span>
-                    <button onclick="removeEquipmentItem(${idx})" class="text-zinc-500 hover:text-red-400 font-bold ml-1" title="Удалить">×</button>
-                `;
-                container.appendChild(tag);
-            });
-        }
-
-        // ==========================================
-        // 9. ПРИМЕР С ФОТО (ФАЛИАНТ) И ПОЛНЫЙ РАНДОМ
-        // ==========================================
-        function loadFaliantExample() {
-            document.getElementById("charName").value = "Фалиант";
-            document.getElementById("charLevel").value = 10;
-            document.getElementById("charRace").value = "Драконорождённый";
-            document.getElementById("charClass").value = "Воин";
-            document.getElementById("charResistance").value = "Электричество";
-            document.getElementById("charFightingStyle").value = "Защита";
-
-            state.stats = {
-                STR: 15,
-                DEX: 12,
-                CON: 17,
-                INT: 12,
-                WIS: 10,
-                CHA: 11
-            };
-
-            state.statRollBreakdown = {
-                STR: "5 6 6 1 = 17",
-                DEX: "1 5 1 4 = 10",
-                CON: "5 3 2 2 = 10",
-                INT: "4 2 6 2 = 12",
-                WIS: "6 2 1 5 = 13",
-                CHA: "5 2 4 3 = 12"
-            };
-
-            STATS_LIST.forEach(s => syncStatUI(s.id));
-            syncRollHistoryTextarea();
-
-            document.getElementById("hpFormulaInput").value = "13+9*6=67";
-            document.getElementById("armorSelect").value = "Кольчуга из монет";
-            document.getElementById("shieldSelect").value = "Щит";
-            document.getElementById("weaponSelect").value = "Двойной топор 1к8";
-            document.getElementById("charAC").value = 17;
-            document.getElementById("elementalDamageNote").value = "6 урон электричество";
-
-            state.equipment = [
-                "Щит",
-                "Кольчуга из монет",
-                "Двойной топор 1к8"
-            ];
-
-            renderRaceDescription();
-            renderClassDescription();
-            renderEquipmentTags();
-            recalculateAC();
-            updateSheet();
-        }
-
-        function generateRandomName() {
-            const randomName = FANTASY_NAMES[Math.floor(Math.random() * FANTASY_NAMES.length)];
-            document.getElementById("charName").value = randomName;
-            updateSheet();
-        }
-
-        function randomizeEntireCharacter() {
-            generateRandomName();
-            const races = Object.keys(RACES_DB);
-            const classes = Object.keys(CLASSES_DB);
-            document.getElementById("charRace").value = races[Math.floor(Math.random() * races.length)];
-            document.getElementById("charClass").value = classes[Math.floor(Math.random() * classes.length)];
-            document.getElementById("charLevel").value = Math.floor(Math.random() * 10) + 1;
-
-            onRaceChange();
-            onClassChange();
-            rollAllStats();
-        }
-
-        // ==========================================
-        // 10. ОБНОВЛЕНИЕ ПРЕВЬЮ И ГЕНЕРАЦИЯ .TXT
-        // ==========================================
-        function updateSheet() {
-            const name = document.getElementById("charName").value.trim() || "Безымянный";
-            const level = document.getElementById("charLevel").value || 1;
-            const race = document.getElementById("charRace").value;
-            const cls = document.getElementById("charClass").value;
-            const ac = document.getElementById("charAC").value;
-            const res = document.getElementById("charResistance").value;
-            const style = document.getElementById("charFightingStyle").value;
-            const rollLines = document.getElementById("rollHistoryText").value;
-            const hpFormula = document.getElementById("hpFormulaInput").value;
-            const elementalNote = document.getElementById("elementalDamageNote").value;
-
-            document.getElementById("previewLevelBadge").textContent = `Уровень ${level}`;
-            document.getElementById("prevName").textContent = name;
-            document.getElementById("prevRace").textContent = race;
-            document.getElementById("prevClass").textContent = cls;
-
-            document.getElementById("prevSTR").textContent = state.stats.STR;
-            document.getElementById("prevDEX").textContent = state.stats.DEX;
-            document.getElementById("prevCON").textContent = state.stats.CON;
-            document.getElementById("prevINT").textContent = state.stats.INT;
-            document.getElementById("prevWIS").textContent = state.stats.WIS;
-            document.getElementById("prevCHA").textContent = state.stats.CHA;
-
-            document.getElementById("prevAC").textContent = ac;
-            document.getElementById("prevRes").textContent = res;
-            document.getElementById("prevStyle").textContent = style;
-
-            document.getElementById("prevRollLines").textContent = rollLines;
-            document.getElementById("prevHpLine").textContent = hpFormula;
-
-            // Заполняем таблицу Снаряжения
-            const equipTbody = document.getElementById("prevEquipTableBody");
-            equipTbody.innerHTML = "";
-
-            const headerRow = document.createElement("tr");
-            headerRow.innerHTML = `<td style="width:100%; color:#d4d4d8; font-weight:600;">Снаряжение</td>`;
-            equipTbody.appendChild(headerRow);
-
-            state.equipment.forEach(item => {
-                const tr = document.createElement("tr");
-                tr.innerHTML = `<td style="width:100%; color:#f4f4f5; font-weight:500;">${item}</td>`;
-                equipTbody.appendChild(tr);
-            });
-
-            document.getElementById("prevElementalLine").textContent = elementalNote;
-
-            // Обновляем превью .txt файла
-            document.getElementById("txtFilePreview").textContent = buildTxtContent();
-        }
-
-        function buildTxtContent() {
-            const name = document.getElementById("charName").value.trim() || "Фалиант";
-            const level = document.getElementById("charLevel").value || 10;
-            const race = document.getElementById("charRace").value;
-            const cls = document.getElementById("charClass").value;
-            const ac = document.getElementById("charAC").value;
-            const res = document.getElementById("charResistance").value;
-            const style = document.getElementById("charFightingStyle").value;
-            const rollLines = document.getElementById("rollHistoryText").value.trim();
-            const hpFormula = document.getElementById("hpFormulaInput").value.trim();
-            const elementalNote = document.getElementById("elementalDamageNote").value.trim();
-
-            const raceInfo = RACES_DB[race];
-            const classInfo = CLASSES_DB[cls];
-
-            const pad = (str, len = 16) => (str + " ".repeat(len)).slice(0, len);
-
-            let txt = "";
-            txt += "========================================\n";
-            txt += "       DNDcreator | By: Deputatik       \n";
-            txt += "     Анкета персонажа D&D 5e (dnd.su)   \n";
-            txt += "========================================\n\n";
-
-            txt += `+------------------+--------------------+\n`;
-            txt += `| ${pad("Имя", 16)} | ${pad(name, 18)} |\n`;
-            txt += `+------------------+--------------------+\n`;
-            txt += `| ${pad("Уровень", 16)} | ${pad(String(level), 18)} |\n`;
-            txt += `+------------------+--------------------+\n`;
-            txt += `| ${pad("Раса", 16)} | ${pad(race, 18)} |\n`;
-            txt += `+------------------+--------------------+\n`;
-            txt += `| ${pad("Класс", 16)} | ${pad(cls, 18)} |\n`;
-            txt += `+------------------+--------------------+\n`;
-            txt += `| ${pad("Сила", 16)} | ${pad(`${state.stats.STR} (${formatMod(getModifier(state.stats.STR))})`, 18)} |\n`;
-            txt += `+------------------+--------------------+\n`;
-            txt += `| ${pad("Ловкость", 16)} | ${pad(`${state.stats.DEX} (${formatMod(getModifier(state.stats.DEX))})`, 18)} |\n`;
-            txt += `+------------------+--------------------+\n`;
-            txt += `| ${pad("Телосложение", 16)} | ${pad(`${state.stats.CON} (${formatMod(getModifier(state.stats.CON))})`, 18)} |\n`;
-            txt += `+------------------+--------------------+\n`;
-            txt += `| ${pad("Интеллект", 16)} | ${pad(`${state.stats.INT} (${formatMod(getModifier(state.stats.INT))})`, 18)} |\n`;
-            txt += `+------------------+--------------------+\n`;
-            txt += `| ${pad("Мудрость", 16)} | ${pad(`${state.stats.WIS} (${formatMod(getModifier(state.stats.WIS))})`, 18)} |\n`;
-            txt += `+------------------+--------------------+\n`;
-            txt += `| ${pad("Харизма", 16)} | ${pad(`${state.stats.CHA} (${formatMod(getModifier(state.stats.CHA))})`, 18)} |\n`;
-            txt += `+------------------+--------------------+\n`;
-            txt += `| ${pad("Кд", 16)} | ${pad(String(ac), 18)} |\n`;
-            txt += `+------------------+--------------------+\n`;
-            txt += `| ${pad("Сопротивление", 16)} | ${pad(res, 18)} |\n`;
-            txt += `+------------------+--------------------+\n`;
-            txt += `| ${pad("Стиль боя", 16)} | ${pad(style, 18)} |\n`;
-            txt += `+------------------+--------------------+\n\n`;
-
-            txt += `${rollLines}\n`;
-            txt += `${hpFormula}\n\n`;
-
-            txt += `+--------------------------+\n`;
-            txt += `| Снаряжение               |\n`;
-            txt += `+--------------------------+\n`;
-            state.equipment.forEach(item => {
-                txt += `| ${pad(item, 24)} |\n`;
-                txt += `+--------------------------+\n`;
-            });
-
-            if (elementalNote) {
-                txt += `\n${elementalNote}\n`;
-            }
-
-            txt += "\n----------------------------------------\n";
-            txt += "СПРАВКА ПО ПЕРСОНАЖУ (DND.SU):\n";
-            if (raceInfo) {
-                txt += `• Раса (${race}): ${raceInfo.description}\n  Ссылка: ${raceInfo.url}\n`;
-            }
-            if (classInfo) {
-                txt += `• Класс (${cls}): ${classInfo.description}\n  Ссылка: ${classInfo.url}\n`;
-            }
-            txt += `• Стиль боя (${style}): ${FIGHTING_STYLES_DB[style] || ""}\n`;
-            txt += "----------------------------------------\n";
-            txt += "Создано в приложении DNDcreator (By: Deputatik)\n";
-
-            return txt;
-        }
-
-        function downloadTxtFile() {
-            const content = buildTxtContent();
-            const charName = (document.getElementById("charName").value.trim() || "Character").replace(/[^a-zA-Zа-яА-Я0-9_-]/g, "_");
-            const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-            const url = URL.createObjectURL(blob);
-
-            const link = document.createElement("a");
-            link.href = url;
-            link.download = `DNDcreator_${charName}.txt`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-        }
-
-        function copySheetToClipboard() {
-            const content = buildTxtContent();
-            const tempArea = document.createElement("textarea");
-            tempArea.value = content;
-            document.body.appendChild(tempArea);
-            tempArea.select();
-            document.execCommand("copy");
-            document.body.removeChild(tempArea);
-
-            const badge = document.getElementById("copyStatusBadge");
-            badge.classList.remove("hidden");
-            setTimeout(() => badge.classList.add("hidden"), 2500);
-        }
-    </script>
+        <div class="step-nav-buttons">
+          <button type="button" class="btn-secondary" data-prev-step="4">⬅ Назад</button>
+          <button type="button" class="btn-primary" data-next-step="6">К снаряжению ➔</button>
+        </div>
+      </section>
+
+      <!-- ============================================================
+           STEP 6: СНАРЯЖЕНИЕ И БОЕВЫЕ ПАРАМЕТРЫ
+           ============================================================ -->
+      <section class="step-section" id="step-6">
+        <div class="section-intro-box">
+          <h2>🛡️ Снаряжение, Доспехи и Боевые параметры</h2>
+          <p>
+            Здесь формируется боевой лист: Доспех и Щит определяют Класс Доспеха (КД), кость здоровья определяет Хиты (HP), а оружие — тип наносимого урона.
+          </p>
+        </div>
+
+        <div class="content-card">
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:1.25rem;">
+            <!-- Armor Choice -->
+            <div>
+              <label for="gear-armor-select" style="font-size:0.85rem; color:var(--gold-light); display:block; margin-bottom:0.4rem; font-weight:700;">
+                Доспехи:
+              </label>
+              <select id="gear-armor-select" class="fantasy-input">
+                <option value="chain_mail" data-ac="16" data-type="heavy" selected>Кольчуга (КД 16, тяжёлый доспех)</option>
+                <option value="leather" data-ac="11" data-type="light">Кожаный доспех (КД 11 + мод. Лов)</option>
+                <option value="studded_leather" data-ac="12" data-type="light">Проклёпанный кожаный (КД 12 + мод. Лов)</option>
+                <option value="scale_mail" data-ac="14" data-type="medium">Чешуйчатый доспех (КД 14 + макс +2 Лов)</option>
+                <option value="breastplate" data-ac="14" data-type="medium">Кираса (КД 14 + макс +2 Лов)</option>
+                <option value="plate" data-ac="18" data-type="heavy">Латы (КД 18, тяжёлый доспех)</option>
+                <option value="unarmored" data-ac="10" data-type="none">Без доспеха (КД 10 + мод. Лов)</option>
+              </select>
+            </div>
+
+            <!-- Shield Toggle -->
+            <div>
+              <label style="font-size:0.85rem; color:var(--gold-light); display:block; margin-bottom:0.4rem; font-weight:700;">
+                Вторая рука / Защита:
+              </label>
+              <label style="display:flex; align-items:center; gap:0.6rem; background:var(--bg-secondary); padding:0.75rem 1rem; border-radius:var(--radius-md); border:1px solid var(--border-subtle); cursor:pointer;">
+                <input type="checkbox" id="gear-shield-toggle" checked style="width:18px; height:18px; accent-color:var(--gold-primary);" />
+                <span style="font-size:0.95rem; font-weight:600; color:#fff;">🛡️ Щит (+2 к КД)</span>
+              </label>
+            </div>
+
+            <!-- Weapons Choice -->
+            <div>
+              <label for="gear-main-weapon-select" style="font-size:0.85rem; color:var(--gold-light); display:block; margin-bottom:0.4rem; font-weight:700;">
+                Основное оружие:
+              </label>
+              <select id="gear-main-weapon-select" class="fantasy-input">
+                <option value="battleaxe_double" selected>Двойной топор (1к8 руб.)</option>
+                <option value="longsword">Длинный меч (1к8 / 1к10 руб.)</option>
+                <option value="greatsword">Двуручный меч (2к6 руб.)</option>
+                <option value="greataxe">Двуручный секира (1к12 руб.)</option>
+                <option value="rapier">Рапира (1к8 кол., фехтовальное)</option>
+                <option value="shortsword">Короткий меч (1к6 кол., лёгкое)</option>
+                <option value="dagger">Кинжал (1к4 кол.)</option>
+                <option value="longbow">Длинный лук (1к8 кол., дальнобойное)</option>
+                <option value="handaxe">Ручной топор (1к6 руб., метательное)</option>
+              </select>
+            </div>
+
+            <!-- Resistance / Elemental Property (as seen on prompt sheet: Сопротивление: Электричество) -->
+            <div>
+              <label for="gear-elemental-res-select" style="font-size:0.85rem; color:var(--gold-light); display:block; margin-bottom:0.4rem; font-weight:700;">
+                Сопротивление урону / Стихия:
+              </label>
+              <select id="gear-elemental-res-select" class="fantasy-input">
+                <option value="lightning" selected>⚡ Электричество (как в анкете)</option>
+                <option value="fire">🔥 Огонь</option>
+                <option value="cold">❄️ Холод</option>
+                <option value="acid">🧪 Кислота</option>
+                <option value="poison">☠️ Яд</option>
+                <option value="necrotic">💀 Некротический урон</option>
+                <option value="radiant">✨ Излучение</option>
+                <option value="force">🔮 Силовое поле</option>
+                <option value="none">Нет особого сопротивления</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Formula Explanations Box -->
+          <div style="margin-top:1.5rem; background:rgba(0,0,0,0.3); border-radius:var(--radius-md); padding:1rem; border:1px solid var(--border-subtle);">
+            <div style="font-size:0.85rem; font-weight:700; color:var(--gold-light); margin-bottom:0.4rem;">
+              💡 Расчет формул персонажа:
+            </div>
+            <ul style="font-size:0.8rem; color:var(--text-muted); list-style:inside square; line-height:1.7;">
+              <li><strong>КД (Класс Доспеха):</strong> <span id="ac-formula-calc">16 (Кольчуга) + 2 (Щит) + 1 (Стиль: Защита) = 19</span></li>
+              <li><strong>Хиты 1-го уровня (HP):</strong> <span id="hp-formula-calc">10 (кость хитов Воина) + 3 (мод. Телосложения) = 13</span></li>
+              <li><strong>Инициатива:</strong> <span id="init-formula-calc">Модификатор Ловкости</span></li>
+              <li><strong>Пассивная внимательность:</strong> <span>10 + модификатор Мудрости (+2 при владении Внимательностью)</span></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="step-nav-buttons">
+          <button type="button" class="btn-secondary" data-prev-step="5">⬅ Назад</button>
+          <button type="button" class="btn-primary" data-next-step="7">К итогу и скачиванию ➔</button>
+        </div>
+      </section>
+
+      <!-- ============================================================
+           STEP 7: ФИНАЛ И ЭКСПОРТ В .TXT
+           ============================================================ -->
+      <section class="step-section" id="step-7">
+        <div class="section-intro-box">
+          <h2>🎉 Персонаж готов к приключениям!</h2>
+          <p>
+            Проверьте итоговую анкету в блоке предпросмотра справа. Вы можете скачать чистый форматированный текстовый файл (.txt) для печати или загрузки в ваш любимый ролевой блокнот.
+          </p>
+        </div>
+
+        <div class="content-card" style="text-align:center; padding:2rem 1.5rem;">
+          <div style="font-size:3rem; margin-bottom:1rem;">📜</div>
+          <h3 style="font-family:var(--font-heading); color:var(--gold-light); font-size:1.4rem; margin-bottom:0.5rem;">
+            Скачайте готовую анкету персонажа
+          </h3>
+          <p style="color:var(--text-muted); font-size:0.9rem; max-width:540px; margin:0 auto 1.5rem;">
+            Файл формируется с аккуратными разделителями, всеми формулами, характеристиками, сопротивлениями и стилем боя.
+          </p>
+
+          <div style="max-width:380px; margin:0 auto; display:flex; flex-direction:column; gap:0.85rem;">
+            <button type="button" id="btn-download-txt" class="btn-download-txt">
+              <span>💾</span>
+              <span>Скачать анкету (.txt)</span>
+            </button>
+            <button type="button" id="btn-copy-clipboard" class="btn-secondary" style="width:100%;">
+              📋 Скопировать в буфер обмена
+            </button>
+          </div>
+          <div id="export-toast-msg" style="margin-top:1rem; font-size:0.85rem; color:var(--emerald); display:none;"></div>
+        </div>
+
+        <div class="step-nav-buttons">
+          <button type="button" class="btn-secondary" data-prev-step="6">⬅ Назад к снаряжению</button>
+          <button type="button" id="btn-reset-character" class="btn-secondary" style="color:var(--crimson);">
+            🔄 Начать заново
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <!-- Right Column: Interactive Live Preview Sidebar -->
+    <aside class="live-preview-wrapper">
+      <div class="live-preview-card" id="live-preview-card">
+        <!-- Sheet Header -->
+        <div class="preview-header">
+          <div class="preview-title">Лист Персонажа</div>
+          <div class="preview-char-name empty-placeholder" id="preview-name">
+            Безымянный Герой
+          </div>
+          <div class="preview-char-subtitle" id="preview-subtitle">
+            Выберите расу и класс
+          </div>
+        </div>
+
+        <!-- Top Combat Stats Bar (AC, HP, Initiative, Speed) -->
+        <div class="sheet-combat-stats">
+          <div class="combat-stat-tile" id="tile-ac" data-tooltip="Класс Доспеха: База + Доспех + Щит + Стиль боя">
+            <div class="stat-tile-label">КД</div>
+            <div class="stat-tile-val shielded" id="preview-ac">10</div>
+          </div>
+          <div class="combat-stat-tile" id="tile-hp" data-tooltip="Хиты: Кость хитов класса + мод. Телосложения">
+            <div class="stat-tile-label">Хиты</div>
+            <div class="stat-tile-val heart" id="preview-hp">10</div>
+          </div>
+          <div class="combat-stat-tile" id="tile-init" data-tooltip="Инициатива: модификатор Ловкости">
+            <div class="stat-tile-label">Иниц.</div>
+            <div class="stat-tile-val" id="preview-init">+0</div>
+          </div>
+          <div class="combat-stat-tile" id="tile-speed" data-tooltip="Скорость передвижения в футах за раунд">
+            <div class="stat-tile-label">Скор.</div>
+            <div class="stat-tile-val" id="preview-speed">30</div>
+          </div>
+        </div>
+
+        <!-- 6 Ability Scores Mini Grid -->
+        <div class="sheet-abilities-grid">
+          <div class="ability-mini-card" id="preview-card-str">
+            <div class="ability-mini-label">СИЛ</div>
+            <div class="ability-mini-score" id="preview-val-str">10</div>
+            <div class="ability-mini-mod" id="preview-mod-str">+0</div>
+          </div>
+          <div class="ability-mini-card" id="preview-card-dex">
+            <div class="ability-mini-label">ЛОВ</div>
+            <div class="ability-mini-score" id="preview-val-dex">10</div>
+            <div class="ability-mini-mod" id="preview-mod-dex">+0</div>
+          </div>
+          <div class="ability-mini-card" id="preview-card-con">
+            <div class="ability-mini-label">ТЕЛ</div>
+            <div class="ability-mini-score" id="preview-val-con">10</div>
+            <div class="ability-mini-mod" id="preview-mod-con">+0</div>
+          </div>
+          <div class="ability-mini-card" id="preview-card-int">
+            <div class="ability-mini-label">ИНТ</div>
+            <div class="ability-mini-score" id="preview-val-int">10</div>
+            <div class="ability-mini-mod" id="preview-mod-int">+0</div>
+          </div>
+          <div class="ability-mini-card" id="preview-card-wis">
+            <div class="ability-mini-label">МУД</div>
+            <div class="ability-mini-score" id="preview-val-wis">10</div>
+            <div class="ability-mini-mod" id="preview-mod-wis">+0</div>
+          </div>
+          <div class="ability-mini-card" id="preview-card-cha">
+            <div class="ability-mini-label">ХАР</div>
+            <div class="ability-mini-score" id="preview-val-cha">10</div>
+            <div class="ability-mini-mod" id="preview-mod-cha">+0</div>
+          </div>
+        </div>
+
+        <!-- Sheet Detail Rows -->
+        <div class="sheet-details-list">
+          <div class="detail-row" id="row-style">
+            <span class="detail-row-label">Стиль боя:</span>
+            <span class="detail-row-val" id="preview-fighting-style">—</span>
+          </div>
+          <div class="detail-row" id="row-resistance">
+            <span class="detail-row-label">Сопротивление:</span>
+            <span class="detail-row-val" id="preview-resistance">—</span>
+          </div>
+          <div class="detail-row" id="row-armor">
+            <span class="detail-row-label">Доспех:</span>
+            <span class="detail-row-val" id="preview-armor">—</span>
+          </div>
+          <div class="detail-row" id="row-weapon">
+            <span class="detail-row-label">Оружие:</span>
+            <span class="detail-row-val" id="preview-weapon">—</span>
+          </div>
+          <div class="detail-row" id="row-passive-perc">
+            <span class="detail-row-label">Пасс. внимательность:</span>
+            <span class="detail-row-val" id="preview-passive-perc">10</span>
+          </div>
+          <div class="detail-row" id="row-prof-bonus">
+            <span class="detail-row-label">Бонус мастерства:</span>
+            <span class="detail-row-val" id="preview-prof-bonus">+2</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- ============================================================
+       ADMIN MODE MODAL & PROTECTED CONTROLS
+       ============================================================ -->
+  <div class="modal-overlay" id="admin-modal-overlay">
+    <div class="admin-modal">
+      <button type="button" class="modal-close-btn" id="btn-close-admin-modal" title="Закрыть">✕</button>
+      
+      <div class="admin-modal-header">
+        <div class="admin-seal-icon">👑</div>
+        <h3>Консоль Мастера Подземелий</h3>
+        <p>
+          Специальный режим полного контроля характеристик, неограниченных бросков кубиков и кастомизации параметров
+        </p>
+      </div>
+
+      <!-- Password Login Form -->
+      <form id="admin-auth-form" onsubmit="return false;">
+        <div class="admin-form-group">
+          <label for="admin-pass-input" style="display:block; font-size:0.8rem; color:var(--text-muted); margin-bottom:0.4rem; font-weight:600;">
+            Мастер-пароль доступа:
+          </label>
+          <input type="password" id="admin-pass-input" class="fantasy-input" placeholder="Введите пароль..." autocomplete="off" />
+          <div id="admin-error-msg" class="admin-error-text">Неверный мастер-пароль! Доступ запрещен.</div>
+        </div>
+        <button type="submit" id="btn-submit-admin" class="btn-primary" style="width:100%; justify-content:center; padding:0.85rem;">
+          🔓 Разблокировать Режим Мастера
+        </button>
+      </form>
+
+      <!-- Authenticated Admin Tools Panel -->
+      <div id="admin-tools-panel" class="admin-tools-panel">
+        <div class="admin-status-badge">
+          <span>⚡</span>
+          <span>Режим Мастера (Dungeon Master) Активен</span>
+        </div>
+
+        <!-- Quick Presets -->
+        <div class="admin-presets-wrap">
+          <div class="admin-section-title">⚡ Быстрые пресеты характеристик:</div>
+          <div class="admin-presets-buttons">
+            <button type="button" class="btn-admin-preset" id="btn-preset-note">
+              <span>📜</span>
+              <span>Из анкеты (15, 12, 17...)</span>
+            </button>
+            <button type="button" class="btn-admin-preset" id="btn-preset-epic">
+              <span>⚔️</span>
+              <span>Эпик (18, 16, 16...)</span>
+            </button>
+            <button type="button" class="btn-admin-preset" id="btn-preset-max">
+              <span>🌟</span>
+              <span>Божество (все 20)</span>
+            </button>
+            <button type="button" class="btn-admin-preset" id="btn-preset-reroll">
+              <span>🎲</span>
+              <span>Перебросить 1d20</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Infinite Rolls Toggle -->
+        <div class="admin-toggle-row">
+          <div>
+            <div style="font-size:0.85rem; font-weight:700; color:#fff;">Бесконечные броски кубиков</div>
+            <div style="font-size:0.75rem; color:var(--text-muted);">Снимает ограничение «только 1 бросок» в шаге 4</div>
+          </div>
+          <label class="switch-wrap">
+            <input type="checkbox" id="admin-infinite-rolls" />
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+
+        <!-- Ability Scores Steppers Grid -->
+        <div class="admin-presets-wrap">
+          <div class="admin-section-title">📊 Точная настройка характеристик (1..30):</div>
+          <div class="admin-stats-grid">
+            <div class="admin-stat-card">
+              <div class="admin-stat-label">Сила (STR)</div>
+              <div class="admin-stat-stepper">
+                <button type="button" class="btn-stepper" data-step-stat="str" data-delta="-1">−</button>
+                <input type="number" id="admin-stat-str" class="admin-stepper-input" min="1" max="30" value="10" />
+                <button type="button" class="btn-stepper" data-step-stat="str" data-delta="1">+</button>
+              </div>
+              <div class="admin-stat-mod-preview" id="admin-mod-str">мод: +0</div>
+            </div>
+
+            <div class="admin-stat-card">
+              <div class="admin-stat-label">Ловкость (DEX)</div>
+              <div class="admin-stat-stepper">
+                <button type="button" class="btn-stepper" data-step-stat="dex" data-delta="-1">−</button>
+                <input type="number" id="admin-stat-dex" class="admin-stepper-input" min="1" max="30" value="10" />
+                <button type="button" class="btn-stepper" data-step-stat="dex" data-delta="1">+</button>
+              </div>
+              <div class="admin-stat-mod-preview" id="admin-mod-dex">мод: +0</div>
+            </div>
+
+            <div class="admin-stat-card">
+              <div class="admin-stat-label">Телослож. (CON)</div>
+              <div class="admin-stat-stepper">
+                <button type="button" class="btn-stepper" data-step-stat="con" data-delta="-1">−</button>
+                <input type="number" id="admin-stat-con" class="admin-stepper-input" min="1" max="30" value="10" />
+                <button type="button" class="btn-stepper" data-step-stat="con" data-delta="1">+</button>
+              </div>
+              <div class="admin-stat-mod-preview" id="admin-mod-con">мод: +0</div>
+            </div>
+
+            <div class="admin-stat-card">
+              <div class="admin-stat-label">Интеллект (INT)</div>
+              <div class="admin-stat-stepper">
+                <button type="button" class="btn-stepper" data-step-stat="int" data-delta="-1">−</button>
+                <input type="number" id="admin-stat-int" class="admin-stepper-input" min="1" max="30" value="10" />
+                <button type="button" class="btn-stepper" data-step-stat="int" data-delta="1">+</button>
+              </div>
+              <div class="admin-stat-mod-preview" id="admin-mod-int">мод: +0</div>
+            </div>
+
+            <div class="admin-stat-card">
+              <div class="admin-stat-label">Мудрость (WIS)</div>
+              <div class="admin-stat-stepper">
+                <button type="button" class="btn-stepper" data-step-stat="wis" data-delta="-1">−</button>
+                <input type="number" id="admin-stat-wis" class="admin-stepper-input" min="1" max="30" value="10" />
+                <button type="button" class="btn-stepper" data-step-stat="wis" data-delta="1">+</button>
+              </div>
+              <div class="admin-stat-mod-preview" id="admin-mod-wis">мод: +0</div>
+            </div>
+
+            <div class="admin-stat-card">
+              <div class="admin-stat-label">Харизма (CHA)</div>
+              <div class="admin-stat-stepper">
+                <button type="button" class="btn-stepper" data-step-stat="cha" data-delta="-1">−</button>
+                <input type="number" id="admin-stat-cha" class="admin-stepper-input" min="1" max="30" value="10" />
+                <button type="button" class="btn-stepper" data-step-stat="cha" data-delta="1">+</button>
+              </div>
+              <div class="admin-stat-mod-preview" id="admin-mod-cha">мод: +0</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vitals & Proficiency -->
+        <div class="admin-vitals-row">
+          <div class="admin-input-group">
+            <label for="admin-input-prof">Бонус мастерства:</label>
+            <select id="admin-input-prof">
+              <option value="2">+2 (1-4 уровни)</option>
+              <option value="3">+3 (5-8 уровни)</option>
+              <option value="4">+4 (9-12 уровни)</option>
+              <option value="5">+5 (13-16 уровни)</option>
+              <option value="6">+6 (17-20 уровни)</option>
+            </select>
+          </div>
+          <div class="admin-input-group">
+            <label for="admin-input-hp">Максимальные Хиты (HP):</label>
+            <input type="number" id="admin-input-hp" min="1" max="500" value="10" />
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="admin-actions-bar">
+          <button type="button" id="btn-admin-apply-stats" class="btn-primary" style="flex:1; justify-content:center; padding:0.75rem;">
+            💾 Применить к анкете
+          </button>
+          <button type="button" id="btn-admin-logout" class="btn-secondary" style="color:var(--crimson); padding:0.75rem;">
+            🚪 Выйти
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <div class="footer-inner">
+      <div>
+        <strong>DNDcreator</strong> • Генератор персонажей D&D 5e • <span class="footer-author">By: Deputatik</span>
+      </div>
+      <div>
+        <a href="https://dnd.su" target="_blank" rel="noopener noreferrer" class="footer-ref-link">
+          📖 База правил и справочник на dnd.su ↗
+        </a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts: Data and Application Logic -->
+  <script src="./data-races.js"></script>
+  <script src="./data-classes.js"></script>
+  <script src="./app.js"></script>
 </body>
 </html>
